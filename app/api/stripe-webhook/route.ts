@@ -1,8 +1,7 @@
 // app/api/stripe-webhook/route.ts
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { stripe } from "@/lib/stripe";           // ← use the central client
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import Stripe from "stripe";
 
 export const dynamic = "force-dynamic";
 
@@ -18,70 +17,39 @@ export async function POST(req: Request) {
   }
 
   let event: Stripe.Event;
+
   try {
-    const payload = await req.text(); // raw body is required
+    const payload = await req.text(); // raw body
     event = stripe.webhooks.constructEvent(payload, sig, secret);
   } catch (err: any) {
-    console.error("Webhook signature verification failed:", err?.message);
     return NextResponse.json(
-      { error: `Webhook verification failed: ${err?.message}` },
+      { error: `Webhook signature verification failed: ${err.message}` },
       { status: 400 }
     );
   }
 
-  try {
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const meta = session.metadata ?? {};
-        const amount =
-          typeof session.amount_total === "number" ? session.amount_total : null;
+  // Handle successful checkout
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as any;
 
-        const { error } = await supabaseAdmin
-          .from("bookings")
-          .upsert(
-            {
-              stripe_session_id: session.id,
-              business_id: meta.business_id ?? null,
-              name: meta.name ?? null,
-              email: session.customer_details?.email ?? meta.email ?? null,
-              phone: meta.phone ?? null,
-              address: meta.address ?? null,
-              service: meta.service ?? null,
-              date: meta.date ?? null,
-              time: meta.time ?? null,
-              notes: meta.notes ?? null,
-              status: "confirmed",
-              deposit_paid: true,
-              deposit_cents: amount,
-            },
-            { onConflict: "stripe_session_id" }
-          );
+    const stripeSessionId = session.id as string | undefined;
+    const findRes = await supabaseAdmin
+      .from("bookings")
+      .select("id,business_id")
+      .eq("stripe_session_id", stripeSessionId ?? "")
+      .maybeSingle();
 
-        if (error) throw error;
-        break;
-      }
-
-      case "checkout.session.expired": {
-        const session = event.data.object as Stripe.Checkout.Session;
-
-        const { error } = await supabaseAdmin
-          .from("bookings")
-          .update({ status: "expired" })
-          .eq("stripe_session_id", session.id);
-
-        if (error) throw error;
-        break;
-      }
-
-      default:
-        // add more event types later if needed
-        break;
+    if (findRes.error) {
+      console.error("DB lookup error:", findRes.error);
     }
 
-    return new Response(null, { status: 200 });
-  } catch (err: any) {
-    console.error("Webhook handler error:", err?.message ?? err);
-    return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
+    if (findRes.data?.id) {
+      await supabaseAdmin
+        .from("bookings")
+        .update({ status: "paid" })
+        .eq("id", findRes.data.id);
+    }
   }
+
+  return NextResponse.json({ received: true }, { status: 200 });
 }
