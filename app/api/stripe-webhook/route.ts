@@ -1,6 +1,7 @@
 // app/api/stripe-webhook/route.ts
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";           // ← use the central client
+import type Stripe from "stripe";
+import { stripe } from "@/lib/stripe";              // <- use central client
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
   let event: Stripe.Event;
 
   try {
-    const payload = await req.text(); // raw body
+    const payload = await req.text(); // raw body in app router
     event = stripe.webhooks.constructEvent(payload, sig, secret);
   } catch (err: any) {
     return NextResponse.json(
@@ -28,26 +29,28 @@ export async function POST(req: Request) {
     );
   }
 
-  // Handle successful checkout
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as any;
 
+    // If you stored stripe_session_id when creating the session
     const stripeSessionId = session.id as string | undefined;
-    const findRes = await supabaseAdmin
-      .from("bookings")
-      .select("id,business_id")
-      .eq("stripe_session_id", stripeSessionId ?? "")
-      .maybeSingle();
-
-    if (findRes.error) {
-      console.error("DB lookup error:", findRes.error);
-    }
-
-    if (findRes.data?.id) {
-      await supabaseAdmin
+    if (stripeSessionId) {
+      const findRes = await supabaseAdmin
         .from("bookings")
-        .update({ status: "paid" })
-        .eq("id", findRes.data.id);
+        .select("id,business_id")
+        .eq("stripe_session_id", stripeSessionId)
+        .maybeSingle();
+
+      if (findRes.error) {
+        console.error("DB lookup error:", findRes.error);
+      }
+
+      if (findRes.data?.id) {
+        await supabaseAdmin
+          .from("bookings")
+          .update({ status: "paid" })
+          .eq("id", findRes.data.id);
+      }
     }
   }
 
