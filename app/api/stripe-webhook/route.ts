@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event;
   try {
-    const payload = await req.text(); // raw body
+    const payload = await req.text(); // raw body is required
     event = stripe.webhooks.constructEvent(payload, sig, secret);
   } catch (err: any) {
     console.error("Webhook signature verification failed:", err?.message);
@@ -33,12 +33,10 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-
         const meta = session.metadata ?? {};
         const amount =
           typeof session.amount_total === "number" ? session.amount_total : null;
 
-        // Upsert booking using the session id as unique key
         const { error } = await supabaseAdmin
           .from("bookings")
           .upsert(
@@ -61,7 +59,6 @@ export async function POST(req: Request) {
           );
 
         if (error) throw error;
-
         break;
       }
 
@@ -74,12 +71,11 @@ export async function POST(req: Request) {
           .eq("stripe_session_id", session.id);
 
         if (error) throw error;
-
         break;
       }
 
       default:
-        // Other events can be added later
+        // add more event types later if needed
         break;
     }
 

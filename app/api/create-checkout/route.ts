@@ -8,10 +8,9 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // Expect these from your booking form
     const {
       businessId,
-      slug,           // optional: where to send user back if they cancel
+      slug,
       name,
       email,
       phone,
@@ -20,14 +19,11 @@ export async function POST(req: Request) {
       date,
       time,
       notes,
-      amountCents,    // Deposit in cents (e.g., 5000 = $50)
+      amountCents,
     } = body;
 
     if (!amountCents || !businessId) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const session = await stripe.checkout.sessions.create({
