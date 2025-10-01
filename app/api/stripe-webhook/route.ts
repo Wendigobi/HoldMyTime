@@ -1,12 +1,10 @@
 // app/api/stripe-webhook/route.ts
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import Stripe from "stripe";
 
 export const dynamic = "force-dynamic";
-
-// No apiVersion option here – let the SDK use its own pinned version.
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature");
@@ -20,13 +18,13 @@ export async function POST(req: Request) {
   }
 
   let event: Stripe.Event;
-
   try {
-    const payload = await req.text(); // raw body in the App Router
+    const payload = await req.text(); // raw body
     event = stripe.webhooks.constructEvent(payload, sig, secret);
   } catch (err: any) {
+    console.error("Webhook signature verification failed:", err?.message);
     return NextResponse.json(
-      { error: `Webhook signature verification failed: ${err.message}` },
+      { error: `Webhook verification failed: ${err?.message}` },
       { status: 400 }
     );
   }
@@ -36,37 +34,58 @@ export async function POST(req: Request) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
 
-        // Optional: persist the Stripe session id if you created the column
-        await supabaseAdmin
+        const meta = session.metadata ?? {};
+        const amount =
+          typeof session.amount_total === "number" ? session.amount_total : null;
+
+        // Upsert booking using the session id as unique key
+        const { error } = await supabaseAdmin
           .from("bookings")
-          .update({
-            status: "paid",
-            stripe_session_id: session.id ?? null,
-          })
-          .eq("id", (session.metadata as any)?.booking_id ?? "");
+          .upsert(
+            {
+              stripe_session_id: session.id,
+              business_id: meta.business_id ?? null,
+              name: meta.name ?? null,
+              email: session.customer_details?.email ?? meta.email ?? null,
+              phone: meta.phone ?? null,
+              address: meta.address ?? null,
+              service: meta.service ?? null,
+              date: meta.date ?? null,
+              time: meta.time ?? null,
+              notes: meta.notes ?? null,
+              status: "confirmed",
+              deposit_paid: true,
+              deposit_cents: amount,
+            },
+            { onConflict: "stripe_session_id" }
+          );
+
+        if (error) throw error;
 
         break;
       }
 
       case "checkout.session.expired": {
         const session = event.data.object as Stripe.Checkout.Session;
-        await supabaseAdmin
+
+        const { error } = await supabaseAdmin
           .from("bookings")
           .update({ status: "expired" })
-          .eq("id", (session.metadata as any)?.booking_id ?? "");
+          .eq("stripe_session_id", session.id);
+
+        if (error) throw error;
+
         break;
       }
 
       default:
-        // Ignore other events for now
+        // Other events can be added later
         break;
     }
 
-    return NextResponse.json({ received: true });
-  } catch (e: any) {
-    return NextResponse.json(
-      { error: `Webhook handling error: ${e.message}` },
-      { status: 500 }
-    );
+    return new Response(null, { status: 200 });
+  } catch (err: any) {
+    console.error("Webhook handler error:", err?.message ?? err);
+    return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
   }
 }
