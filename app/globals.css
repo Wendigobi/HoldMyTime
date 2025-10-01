@@ -1,0 +1,29 @@
+/* Tailwind v3 directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Your theme variables (works fine with v3) */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* handy little utilities used by the app */
+.btn { @apply inline-flex items-center justify-center rounded-xl px-4 py-2 font-semibold shadow-sm transition bg-blue-600 text-white; }
+.card { @apply rounded-2xl shadow-lg border border-gray-200 bg-white; }
+.field { @apply w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500; }
+.muted { @apply text-sm text-gray-500; }
