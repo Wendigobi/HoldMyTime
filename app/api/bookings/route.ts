@@ -5,20 +5,17 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/**
- * GET /api/bookings
- * Returns latest bookings (adjust table/columns as needed)
- */
 export async function GET() {
   try {
     const supabase = getSupabaseAdmin();
     if (!supabase) {
       return NextResponse.json(
-        { error: "Server is misconfigured (Supabase env missing)." },
+        { error: "Server misconfigured: Supabase env vars missing." },
         { status: 500 }
       );
     }
 
+    // NOTE: supabase is guaranteed non-null after the guard
     const { data, error } = await supabase
       .from("bookings")
       .select("*")
@@ -38,16 +35,12 @@ export async function GET() {
   }
 }
 
-/**
- * POST /api/bookings
- * Minimal example: insert a booking row (adjust shape as needed)
- */
 export async function POST(req: Request) {
   try {
     const supabase = getSupabaseAdmin();
     if (!supabase) {
       return NextResponse.json(
-        { error: "Server is misconfigured (Supabase env missing)." },
+        { error: "Server misconfigured: Supabase env vars missing." },
         { status: 500 }
       );
     }
