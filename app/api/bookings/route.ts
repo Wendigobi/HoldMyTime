@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// GET /api/bookings  → list bookings (newest first)
 export async function GET() {
   try {
     const supabase = getSupabaseAdmin();
@@ -15,7 +16,6 @@ export async function GET() {
       );
     }
 
-    // NOTE: supabase is guaranteed non-null after the guard
     const { data, error } = await supabase
       .from("bookings")
       .select("*")
@@ -27,7 +27,7 @@ export async function GET() {
 
     return NextResponse.json({ data });
   } catch (err: any) {
-    console.error("GET /api/bookings failed:", err?.message || err);
+    console.error("GET /api/bookings error:", err?.message || err);
     return NextResponse.json(
       { error: err?.message || "Unknown error" },
       { status: 500 }
@@ -35,6 +35,7 @@ export async function GET() {
   }
 }
 
+// POST /api/bookings  → create a booking record
 export async function POST(req: Request) {
   try {
     const supabase = getSupabaseAdmin();
@@ -59,7 +60,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(data);
   } catch (err: any) {
-    console.error("POST /api/bookings failed:", err?.message || err);
+    console.error("POST /api/bookings error:", err?.message || err);
     return NextResponse.json(
       { error: err?.message || "Unknown error" },
       { status: 500 }
