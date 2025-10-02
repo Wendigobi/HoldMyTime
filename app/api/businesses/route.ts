@@ -1,30 +1,41 @@
+// /app/api/businesses/route.ts
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin"; // if the @ alias doesn't work, use a relative path: "../../lib/supabaseAdmin"
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { owner_email, name, slug, email, phone, deposit, services } = body;
 
-  if (!owner_email || !name || !slug || !deposit) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-  }
-  const dep = parseInt(deposit);
-  if (![25, 50, 75, 100].includes(dep)) {
-    return NextResponse.json({ error: "Deposit must be 25, 50, 75, or 100" }, { status: 400 });
-  }
+  const {
+    owner_email,
+    name,
+    slug,
+    email,
+    phone,
+    deposit_cents,  // or your field name
+    services,       // or your field name
+  } = body;
 
-  const servicesArr =
-    typeof services === "string" && services.length
-      ? (services as string).split(",").map((s) => s.trim()).filter(Boolean)
-      : [];
+  const supabase = getSupabaseAdmin();            // <-- CREATE THE CLIENT
 
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabase          // <-- USE THE CLIENT
     .from("businesses")
-    .insert({ owner_email, name, slug, email, phone, deposit: dep, services: servicesArr })
+    .insert([
+      {
+        owner_email,
+        name,
+        slug,
+        email,
+        phone,
+        deposit_cents,
+        services,
+      },
+    ])
     .select("slug")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
 
-  return NextResponse.json({ slug: data.slug });
+  return NextResponse.json({ slug: data.slug }, { status: 200 });
 }

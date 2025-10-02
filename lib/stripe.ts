@@ -1,5 +1,5 @@
 // lib/stripe.ts
 import Stripe from "stripe";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-// no apiVersion property – SDK will use its baked-in version
+// Do not set apiVersion here to avoid TypeScript literal mismatches
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {});
