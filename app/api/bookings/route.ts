@@ -7,30 +7,23 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const supabase = getSupabaseAdmin(); // never null (throws if misconfigured)
+    const supabase = getSupabaseAdmin();
 
     const { data, error } = await supabase
       .from("bookings")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json({ data });
   } catch (err: any) {
-    console.error("GET /api/bookings error:", err?.message || err);
-    return NextResponse.json(
-      { error: err?.message || "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: err?.message || "Server error" }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const supabase = getSupabaseAdmin(); // never null
-
+    const supabase = getSupabaseAdmin();
     const body = await req.json();
 
     const { data, error } = await supabase
@@ -39,15 +32,9 @@ export async function POST(req: Request) {
       .select("*")
       .single();
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json(data);
   } catch (err: any) {
-    console.error("POST /api/bookings error:", err?.message || err);
-    return NextResponse.json(
-      { error: err?.message || "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: err?.message || "Server error" }, { status: 500 });
   }
 }
