@@ -1,16 +1,17 @@
 // /lib/supabaseAdmin.ts
-import { createClient } from "@supabase/supabase-js";
+import 'server-only';
+import { createClient } from '@supabase/supabase-js';
 
 export function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  if (!url || !key) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-  }
-  return createClient(url, key, {
-    auth: { persistSession: false },
-  });
-}
 
-// optional convenience
-export const supabaseAdmin = () => getSupabaseAdmin();
+  if (!url || !key) {
+    throw new Error(
+      'Supabase env vars missing. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'
+    );
+  }
+
+  // Never persist session in a server-only client
+  return createClient(url, key, { auth: { persistSession: false } });
+}
