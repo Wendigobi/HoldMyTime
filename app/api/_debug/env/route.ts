@@ -1,11 +1,16 @@
+// app/api/_debug/env/route.ts
 import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 export async function GET() {
-  return NextResponse.json({
+  const present = {
     NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_SITE_URL: !!process.env.NEXT_PUBLIC_SITE_URL,
     SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    NODE_ENV: process.env.NODE_ENV,
-    NEXT_RUNTIME: process.env.NEXT_RUNTIME ?? "nodejs",
-  });
+    SUPABASE_JWT_SECRET: !!process.env.SUPABASE_JWT_SECRET,
+    STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: !!process.env.STRIPE_WEBHOOK_SECRET,
+  };
+  return NextResponse.json({ ok: true, present });
 }
