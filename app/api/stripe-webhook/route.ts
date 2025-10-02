@@ -1,50 +1,49 @@
 // app/api/stripe-webhook/route.ts
-import { NextResponse } from 'next/server'
-import Stripe from 'stripe'
-import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { NextResponse } from "next/server";
+import { stripe } from "@/lib/stripe";
 
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic' // <-- prevents pre-render
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-// If you pinned apiVersion earlier, remove it or keep it pinned to your installed SDK version.
-// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' })
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+// No body parser config needed in App Router. We'll read raw text.
 
 export async function POST(req: Request) {
-  const sig = req.headers.get('stripe-signature')
-  const secret = process.env.STRIPE_WEBHOOK_SECRET
+  const sig = req.headers.get("stripe-signature");
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+
   if (!sig || !secret) {
-    return NextResponse.json({ error: 'Missing webhook signature/secret' }, { status: 400 })
+    console.error("Missing Stripe webhook secret/signature");
+    return new NextResponse("Bad Request", { status: 400 });
   }
 
-  let event: Stripe.Event
+  let event: any;
   try {
-    const payload = await req.text()
-    event = stripe.webhooks.constructEvent(payload, sig, secret)
+    const raw = await req.text(); // raw body for verification
+    event = stripe.webhooks.constructEvent(raw, sig, secret);
   } catch (err: any) {
-    return NextResponse.json({ error: `Webhook signature verification failed: ${err.message}` }, { status: 400 })
+    console.error("Webhook signature verification failed:", err.message);
+    return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
   try {
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session
-      const stripeSessionId = session.id
-      const email = session.customer_details?.email || null
-      const amountTotal = session.amount_total || 0
-
-      // Example: mark booking as paid by stripeSessionId
-      const supabase = getSupabaseAdmin()
-      const { error } = await supabase
-        .from('bookings')
-        .update({ paid: true, stripe_session_id: stripeSessionId, email, amount_total: amountTotal })
-        .eq('stripe_session_id', stripeSessionId)
-
-      if (error) throw error
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object;
+        // TODO: mark booking as paid, etc.
+        break;
+      }
+      case "checkout.session.expired": {
+        // TODO: handle expired session
+        break;
+      }
+      default:
+        // keep silent for unhandled event types
+        break;
     }
-
-    return NextResponse.json({ received: true })
   } catch (err: any) {
-    console.error('Webhook handler error:', err)
-    return NextResponse.json({ error: err.message ?? 'Server error' }, { status: 500 })
+    console.error("Webhook handler failed:", err.message);
+    return new NextResponse("Webhook handler error", { status: 500 });
   }
+
+  return NextResponse.json({ received: true });
 }

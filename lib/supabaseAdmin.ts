@@ -1,17 +1,25 @@
-// /lib/supabaseAdmin.ts
-import 'server-only';
-import { createClient } from '@supabase/supabase-js';
+// lib/supabaseAdmin.ts
+import { createClient } from "@supabase/supabase-js";
 
 export function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  // Accept either common var name or fallback
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_URL;
 
-  if (!url || !key) {
-    throw new Error(
-      'Supabase env vars missing. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'
-    );
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceKey) {
+    // Keep logs compact, don't leak secrets
+    console.error("Missing Supabase env", {
+      hasUrl: !!url,
+      hasServiceKey: !!serviceKey,
+      vercelEnv: process.env.VERCEL_ENV,
+    });
+    return null;
   }
 
-  // Never persist session in a server-only client
-  return createClient(url, key, { auth: { persistSession: false } });
+  return createClient(url, serviceKey, {
+    auth: { persistSession: false },
+  });
 }
