@@ -1,29 +1,44 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
-export default function AuthGate({
-  signedOut,
-  children,
-}: {
+type Props = {
+  signedIn: React.ReactNode;
   signedOut: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+};
 
+// Create a single browser client for this module.
+// (The SSR package works fine in the browser; this is a client component.)
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+export default function AuthGate({ signedIn, signedOut }: Props) {
   const [loading, setLoading] = useState(true);
-  const [isAuthed, setAuthed] = useState(false);
+  const [session, setSession] = useState<null | unknown>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setAuthed(!!data.user);
+    let mounted = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      setSession(data.session);
       setLoading(false);
     });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, sess) => {
+      if (!mounted) return;
+      setSession(sess);
+    });
+
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
-  if (loading) return <div className="text-gray-400">Loading…</div>;
-  return isAuthed ? <>{children}</> : <>{signedOut}</>;
+  if (loading) return null;
+  return session ? <>{signedIn}</> : <>{signedOut}</>;
 }

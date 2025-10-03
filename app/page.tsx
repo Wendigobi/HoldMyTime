@@ -1,6 +1,9 @@
 // app/page.tsx
 import Link from 'next/link';
-import AuthGate from './components/AuthGate'; // <-- correct path
+import AuthGate from '@/components/AuthGate';        // alias (requires /components/AuthGate.tsx at repo root)
+// import AuthGate from '../components/AuthGate';    // <-- relative fallback if you prefer
+
+import CreatePageForm from './components/createpageform'; // keep your form where it already is
 
 export default function HomePage() {
   return (
@@ -12,24 +15,25 @@ export default function HomePage() {
             <p>Please sign in to create and manage your booking pages.</p>
             <Link
               href="/login"
-              className="inline-flex items-center rounded-md bg-yellow-500 px-4 py-2 font-medium text-black hover:bg-yellow-400"
+              className="inline-flex items-center rounded-md bg-amber-500 px-4 py-2 font-medium text-black hover:bg-amber-400"
             >
               Sign in
             </Link>
           </div>
         }
-      >
-        <div className="max-w-3xl space-y-4">
-          <h1 className="text-2xl font-semibold">You’re signed in</h1>
-          <p>Continue to your dashboard to manage booking pages.</p>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center rounded-md bg-yellow-500 px-4 py-2 font-medium text-black hover:bg-yellow-400"
-          >
-            Go to dashboard
-          </Link>
-        </div>
-      </AuthGate>
+        signedIn={
+          <div className="max-w-2xl space-y-6">
+            <h1 className="text-2xl font-semibold">Create your booking page</h1>
+            <CreatePageForm />
+            <p className="text-sm text-muted-foreground">
+              Need to see your pages? Go to your{' '}
+              <Link href="/dashboard" className="underline underline-offset-4">
+                dashboard
+              </Link>.
+            </p>
+          </div>
+        }
+      />
     </main>
   );
 }
