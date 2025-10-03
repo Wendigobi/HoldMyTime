@@ -1,62 +1,71 @@
-// app/page.tsx
-"use client";
-import { useState } from "react";
+'use client';
 
-export default function Home() {
-  const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+import { useState } from 'react';
+
+export default function Page() {
+  const [error, setError] = useState<string | null>(null);
+  const [ok, setOk] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setMsg(null);
-    setLoading(true);
-    const form = new FormData(e.currentTarget);
-    const res = await fetch("/api/businesses", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        name: form.get("name"),
-        email: form.get("email"),
-        phone: form.get("phone"),
-        deposit: form.get("deposit"),
-      }),
+    setError(null); setOk(false);
+
+    const fd = new FormData(e.currentTarget);
+    const payload = Object.fromEntries(fd as any);
+
+    const res = await fetch('/api/businesses', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
     });
-    const j = await res.json();
-    setLoading(false);
-    if (!res.ok) setMsg(j.error ?? "Something went wrong");
-    else setMsg(`Created! /${j.business.slug}`);
+    const data = await res.json();
+    if (!res.ok) { setError(data.error || 'Error'); return; }
+
+    setOk(true);
+    e.currentTarget.reset();
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 p-8">
-        <div className="pt-10">
-          <h1 className="text-5xl font-bold leading-tight">
-            Book more jobs in 24h — <span className="text-yellow-500">with a deposit.</span>
-          </h1>
-          <p className="mt-4 text-zinc-400">
-            Stop no-shows. Create a booking page with a fixed deposit ($25, $50, $75, or $100). Share it, get paid, get confirmations.
-          </p>
-        </div>
+    <main className="container mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 py-10">
+      <section>
+        <h1 className="text-4xl font-bold">Book more jobs in 24h — with a deposit.</h1>
+        <p className="mt-4 opacity-80">
+          Stop no-shows cold. Create a booking page with a fixed deposit ($25, $50, $75, or $100).
+          Share it, get paid, get confirmations.
+        </p>
+      </section>
 
-        <form onSubmit={onSubmit} className="self-start mt-10 rounded-2xl border border-yellow-500/40 bg-zinc-950 p-6 shadow-[0_0_40px_rgba(234,179,8,.05)]">
-          <h2 className="text-xl font-medium mb-4">Create your booking page</h2>
-          <input name="email" type="email" placeholder="your@email.com" className="input" required />
-          <input name="name" placeholder="Business name" className="input" required />
-          <input name="phone" placeholder="Phone (optional)" className="input" />
-          <select name="deposit" className="input" defaultValue="25">
-            {[25,50,75,100].map(v => <option key={v} value={v}>${v}</option>)}
+      <section>
+        <form onSubmit={onSubmit} className="space-y-3">
+          {/* YOU (owner) */}
+          <input name="owner_email" placeholder="Your email (owner)" required className="w-full" />
+
+          {/* Business name */}
+          <input name="name" placeholder="Business name" required className="w-full" />
+
+          {/* Slug (unique) */}
+          <input name="slug" placeholder="Unique slug (e.g. shanes-cleaning)" required className="w-full" />
+
+          {/* Public contact email (REQUIRED and often missing) */}
+          <input name="email" placeholder="Public contact email" required className="w-full" />
+
+          {/* Optional phone */}
+          <input name="phone" placeholder="Phone (optional)" className="w-full" />
+
+          {/* Deposit */}
+          <select name="deposit" defaultValue="$25" required className="w-full">
+            <option value="$25">$25</option>
+            <option value="$50">$50</option>
+            <option value="$75">$75</option>
+            <option value="$100">$100</option>
           </select>
-          <button disabled={loading} className="w-full mt-4 py-2 rounded bg-yellow-500 text-black font-medium hover:bg-yellow-400">
-            {loading ? "Creating..." : "Create page"}
-          </button>
-          {msg && <p className="mt-3 text-sm text-yellow-400">{msg}</p>}
-          <style jsx global>{`
-            .input { width:100%; margin:.5rem 0; padding:.6rem .8rem; border-radius:.6rem; background:#0a0a0a; border:1px solid #232323; outline:none }
-            .input:focus { border-color:#eab308 }
-          `}</style>
+
+          <button type="submit" className="w-full">Create page</button>
+
+          {ok && <div className="text-green-500">Created!</div>}
+          {error && <div className="text-red-400">{error}</div>}
         </form>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
