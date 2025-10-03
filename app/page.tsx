@@ -1,7 +1,5 @@
 // app/page.tsx
 import Link from 'next/link';
-
-// ⬇️ use relative paths, not '@'
 import AuthGate from '../components/AuthGate';
 import CreatePageForm from '../components/CreatePageForm';
 
