@@ -1,0 +1,3 @@
+[35mapp/api/bookings/route.ts[m[36m:[m[32m12[m[36m:[m    const { data, error } = [1;31mawait supabase[m
+[35mapp/api/bookings/route.ts[m[36m:[m[32m36[m[36m:[m    const { data, error } = [1;31mawait supabase[m
+[35mapp/api/businesses/route.ts[m[36m:[m[32m30[m[36m:[m    const { data, error } = [1;31mawait supabase[m

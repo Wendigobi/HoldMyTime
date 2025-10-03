@@ -1,29 +1,43 @@
-/* Tailwind v3 directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Your theme variables (works fine with v3) */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body, #__next {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  @apply bg-black text-white;
+  background-image:
+    radial-gradient(1200px 600px at 80% -20%, rgba(212,175,55,0.08), transparent),
+    radial-gradient(1000px 500px at -30% 120%, rgba(212,175,55,0.06), transparent);
 }
 
-/* handy little utilities used by the app */
-.btn { @apply inline-flex items-center justify-center rounded-xl px-4 py-2 font-semibold shadow-sm transition bg-blue-600 text-white; }
-.card { @apply rounded-2xl shadow-lg border border-gray-200 bg-white; }
-.field { @apply w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500; }
-.muted { @apply text-sm text-gray-500; }
+/* subtle gold grid overlay */
+.bg-grid {
+  background-image: theme('backgroundImage.gold-grid');
+  background-size: theme('backgroundSize.grid');
+  background-position: center center;
+}
+
+.card {
+  @apply rounded-2xl border border-zinc-800/60 bg-zinc-900/60 backdrop-blur-xl shadow-gold;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-xl px-5 py-2 font-medium transition;
+}
+.btn-gold {
+  @apply btn bg-gradient-to-br from-gold-500 to-gold-400 text-black hover:from-gold-400 hover:to-gold-300;
+}
+.btn-ghost {
+  @apply btn border border-zinc-700 hover:bg-zinc-800/50;
+}
+
+.input, .select, .textarea {
+  @apply w-full rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2 outline-none focus:border-gold-400;
+}

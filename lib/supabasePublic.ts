@@ -1,8 +1,9 @@
-// lib/supabasePublic.ts
-import { createClient } from "@supabase/supabase-js";
+'use client';
 
-export function getSupabaseBrowser() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  return createClient(url, anon);
-}
+import { createClient } from '@supabase/supabase-js';
+
+export const supabaseBrowser = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  { auth: { persistSession: true } }
+);
