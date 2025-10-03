@@ -1,6 +1,9 @@
 // app/page.tsx
 import Link from 'next/link';
-import AuthGate from '@/components/AuthGate';
+// import AuthGate from '@/components/AuthGate';
+
+// AFTER (works regardless of alias)
+import AuthGate from '../components/AuthGate';
 
 export default function HomePage() {
   return (
