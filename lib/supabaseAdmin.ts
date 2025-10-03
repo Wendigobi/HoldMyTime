@@ -1,15 +1,24 @@
 // lib/supabaseAdmin.ts
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-export function getSupabaseAdmin(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+/**
+ * Server-side Supabase client with the Service Role key.
+ * NOTE: Never expose the Service Role key to the browser.
+ */
+export function getSupabaseAdmin(): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!url || !serviceRoleKey) {
-    throw new Error("Missing Supabase env vars (URL or SERVICE_ROLE_KEY).");
+    console.error('Missing Supabase envs: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+    return null
   }
 
   return createClient(url, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+    global: { headers: { 'X-Client-Info': 'holdmytime-admin' } },
+  })
 }

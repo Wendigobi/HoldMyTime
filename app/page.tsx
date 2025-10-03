@@ -1,90 +1,80 @@
 // app/page.tsx
-"use client";
+'use client'
 
-import { useState } from "react";
+import { useState } from 'react'
+
+const TIERS = [
+  { value: 25, label: '$25' },
+  { value: 50, label: '$50' },
+  { value: 75, label: '$75' },
+  { value: 100, label: '$100' },
+] as const
 
 export default function HomePage() {
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [phone, setPhone] = useState("");
-  const [ownerEmail, setOwnerEmail] = useState("");
-  const [priceTier, setPriceTier] = useState("$25");
-  const [status, setStatus] = useState<null | string>(null);
+  const [msg, setMsg] = useState<string>('')
 
-  const create = async () => {
-    setStatus("Creating...");
-    try {
-      const res = await fetch("/api/businesses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          name,
-          slug,
-          phone,
-          owner_email: ownerEmail,
-          price_tier: priceTier,
-          services: [],
-        }),
-      });
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setMsg('')
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Request failed");
+    const form = new FormData(e.currentTarget)
 
-      setStatus(`Created! slug=${json.slug}`);
-    } catch (err: any) {
-      setStatus(`Error: ${err.message}`);
+    const payload = {
+      owner_email: String(form.get('owner_email') || ''),
+      name: String(form.get('name') || ''),
+      slug: String(form.get('slug') || ''),
+      phone: String(form.get('phone') || ''),
+      email: String(form.get('public_email') || ''),
+      // send a NUMBER (not "$75")
+      price_tier: Number(form.get('tier') || 25),
+      // optionally: collect services as comma-separated string
+      services: [],
     }
-  };
+
+    const res = await fetch('/api/businesses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    const json = await res.json()
+    if (!res.ok || !json.ok) {
+      setMsg(json.error || 'Something went wrong.')
+      return
+    }
+
+    setMsg(`Created! Share URL: /business/${json.slug}`)
+  }
 
   return (
-    <main style={{ maxWidth: 700, margin: "2rem auto", padding: 24 }}>
-      <h1>Create your booking page</h1>
+    <main style={{ maxWidth: 680, margin: '40px auto', padding: 16 }}>
+      <h2>Create your booking page</h2>
       <p>Stripe checkout + confirmation. Fixed deposits.</p>
 
-      <div style={{ display: "grid", gap: 12 }}>
-        <input
-          placeholder="Business email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          placeholder="Business name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          placeholder="Slug (unique)"
-          value={slug}
-          onChange={(e) => setSlug(e.target.value)}
-        />
-        <input
-          placeholder="Phone"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-        />
-        <input
-          placeholder="Owner email"
-          value={ownerEmail}
-          onChange={(e) => setOwnerEmail(e.target.value)}
-        />
+      <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12 }}>
+        <input name="owner_email" type="email" placeholder="Your email" required />
+        <input name="name" placeholder="Business name" required />
+        <input name="slug" placeholder="Custom slug (optional, otherwise from name)" />
+        <input name="phone" placeholder="Phone" />
+        <input name="public_email" type="email" placeholder="Public contact email" />
 
-        <select
-          value={priceTier}
-          onChange={(e) => setPriceTier(e.target.value)}
-        >
-          <option>$25</option>
-          <option>$50</option>
-          <option>$75</option>
-          <option>$100</option>
+        {/* The important part: value is numeric */}
+        <select name="tier" defaultValue={25} required>
+          {TIERS.map(t => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
         </select>
 
-        <button onClick={create}>Create page</button>
-        <div style={{ minHeight: 20, color: status?.startsWith("Error") ? "crimson" : "green" }}>
-          {status}
-        </div>
-      </div>
+        <button type="submit">Create page</button>
+      </form>
+
+      {msg && (
+        <p style={{ marginTop: 12, color: msg.startsWith('Created!') ? 'limegreen' : 'crimson' }}>
+          {msg}
+        </p>
+      )}
     </main>
-  );
+  )
 }
