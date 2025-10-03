@@ -1,7 +1,9 @@
 // app/page.tsx
 import Link from 'next/link';
-import AuthGate from '@/components/AuthGate';
-import CreatePageForm from '@/components/CreatePageForm';
+
+// ⬇️ use relative paths, not '@'
+import AuthGate from '../components/AuthGate';
+import CreatePageForm from '../components/CreatePageForm';
 
 export default function HomePage() {
   return (
