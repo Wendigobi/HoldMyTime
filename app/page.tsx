@@ -1,7 +1,6 @@
 // app/page.tsx
 import Link from 'next/link';
-import AuthGate from '@/components/AuthGate';
-
+import AuthGate from './components/AuthGate'; // <-- correct path
 
 export default function HomePage() {
   return (
