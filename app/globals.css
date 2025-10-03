@@ -1,43 +1,66 @@
+/* app/globals.css */
+
+/* Tailwind layers */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Theme variables */
 :root {
-  color-scheme: dark;
+  --bg: #0b0b0f;
+  --panel: #121218;
+  --ink: #e8e8ea;
+  --mute: #9aa0aa;
+  --gold: #d4af37;
+  --gold-soft: #f0d678;
+  --gold-deep: #a98b2b;
 }
 
 html, body, #__next {
   height: 100%;
 }
 
-body {
-  @apply bg-black text-white;
-  background-image:
-    radial-gradient(1200px 600px at 80% -20%, rgba(212,175,55,0.08), transparent),
-    radial-gradient(1000px 500px at -30% 120%, rgba(212,175,55,0.06), transparent);
+html, body {
+  background: var(--bg);
+  color: var(--ink);
 }
 
-/* subtle gold grid overlay */
-.bg-grid {
-  background-image: theme('backgroundImage.gold-grid');
-  background-size: theme('backgroundSize.grid');
-  background-position: center center;
+/* Smooth modern defaults */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-deep) transparent;
 }
 
-.card {
-  @apply rounded-2xl border border-zinc-800/60 bg-zinc-900/60 backdrop-blur-xl shadow-gold;
+::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  border-radius: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.btn {
-  @apply inline-flex items-center justify-center rounded-xl px-5 py-2 font-medium transition;
-}
-.btn-gold {
-  @apply btn bg-gradient-to-br from-gold-500 to-gold-400 text-black hover:from-gold-400 hover:to-gold-300;
-}
-.btn-ghost {
-  @apply btn border border-zinc-700 hover:bg-zinc-800/50;
-}
-
-.input, .select, .textarea {
-  @apply w-full rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2 outline-none focus:border-gold-400;
+/* Reusable card/panel utilities (Tailwind-friendly) */
+@layer components {
+  .hmt-card {
+    @apply rounded-2xl bg-panel/80 border border-gold/10 shadow-glow;
+    backdrop-filter: saturate(140%) blur(6px);
+  }
+  .hmt-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 font-medium transition;
+  }
+  .hmt-btn--gold {
+    background: linear-gradient(135deg, var(--gold-soft), var(--gold));
+    color: #121212;
+    box-shadow: 0 10px 20px rgba(212,175,55,0.18);
+  }
+  .hmt-btn--gold:hover {
+    filter: brightness(1.05);
+  }
+  .hmt-input {
+    @apply rounded-xl bg-panel/70 border border-gold/15 px-4 py-2 outline-none text-ink placeholder:text-mute focus:border-gold/40;
+  }
 }

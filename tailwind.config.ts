@@ -1,38 +1,37 @@
-import type { Config } from 'tailwindcss'
+// tailwind.config.ts
+import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: ["class"],
   content: [
-    "./app/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx,mdx}",
+    "./components/**/*.{ts,tsx,mdx}",
+    "./pages/**/*.{ts,tsx,mdx}",
   ],
   theme: {
     extend: {
       colors: {
+        // Black & Gold palette
+        bg: "#0b0b0f",
+        panel: "#121218",
         gold: {
-          50: '#fff9e6',
-          100: '#fff1bf',
-          200: '#ffe780',
-          300: '#ffd94d',
-          400: '#f5c542', // main
-          500: '#d4af37',
-          600: '#b7942f',
-          700: '#8a7224',
-          800: '#5f5119',
-          900: '#3a310f'
-        }
+          DEFAULT: "#d4af37",
+          soft: "#f0d678",
+          deep: "#a98b2b",
+        },
+        ink: "#e8e8ea",
+        mute: "#9aa0aa",
       },
       boxShadow: {
-        'gold': '0 8px 30px rgba(212,175,55,0.25)'
+        glow: "0 0 0 1px rgba(212,175,55,0.35), 0 10px 40px rgba(212,175,55,0.08)",
       },
-      backgroundImage: {
-        'gold-grid':
-          'linear-gradient(rgba(212,175,55,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(212,175,55,0.08) 1px, transparent 1px)',
+      borderRadius: {
+        xl: "14px",
+        "2xl": "18px",
       },
-      backgroundSize: {
-        'grid': '40px 40px',
-      }
     },
   },
   plugins: [],
-}
-export default config
+};
+
+export default config;
