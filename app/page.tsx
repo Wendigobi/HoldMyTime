@@ -1,6 +1,7 @@
 // app/page.tsx
 import Link from 'next/link';
-// import AuthGate from './components/AuthGate';
+import AuthGate from '@/components/AuthGate';
+
 
 export default function HomePage() {
   return (
@@ -19,21 +20,15 @@ export default function HomePage() {
           </div>
         }
       >
-        {/* Shown when the user IS signed-in */}
-        <div className="max-w-3xl space-y-6">
-          <h1 className="text-3xl font-bold">Create your booking page</h1>
-
-          {/* Example: link to dashboard */}
+        <div className="max-w-3xl space-y-4">
+          <h1 className="text-2xl font-semibold">You’re signed in</h1>
+          <p>Continue to your dashboard to manage booking pages.</p>
           <Link
             href="/dashboard"
             className="inline-flex items-center rounded-md bg-yellow-500 px-4 py-2 font-medium text-black hover:bg-yellow-400"
           >
-            Go to Dashboard
+            Go to dashboard
           </Link>
-
-          {/* Your form can live here (or on another route) */}
-          {/* Make sure your form fields match your API params exactly */}
-          {/* <form action="/api/businesses" method="post"> ... </form> */}
         </div>
       </AuthGate>
     </main>

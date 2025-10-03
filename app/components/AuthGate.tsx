@@ -16,7 +16,7 @@ export default function AuthGate({
   );
 
   const [loading, setLoading] = useState(true);
-  const [isAuthed, setAuthed] = useState(false);
+  const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -26,5 +26,5 @@ export default function AuthGate({
   }, []);
 
   if (loading) return <div className="text-gray-400">Loading…</div>;
-  return isAuthed ? <>{children}</> : <>{signedOut}</>;
+  return authed ? <>{children}</> : <>{signedOut}</>;
 }
