@@ -1,86 +1,70 @@
-// app/api/businesses/route.ts
 import { NextResponse } from 'next/server'
 import getSupabaseAdmin from '@/lib/supabaseAdmin'
 
 export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
 
-// (unchanged) helpers…
-function slugify(s: string) {
-  return s
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
-
-function sanitize(form: FormData) {
-  const owner_email = String(form.get('owner_email') || '').trim().toLowerCase()
-  const name = String(form.get('name') || '').trim()
-  const email = String(form.get('email') || '').trim().toLowerCase()
-  const phone = String(form.get('phone') || '').trim()
-  const depositRaw = String(form.get('deposit') || '').trim()
-
-  const dep = Number(depositRaw) // expecting 25 / 50 / 75 / 100 (see <select>)
-  if (![25, 50, 75, 100].includes(dep)) throw new Error('Invalid deposit value')
-
-  const servicesRaw = String(form.get('services') || '')
-  const services = servicesRaw
-    ? servicesRaw.split(',').map(s => s.trim()).filter(Boolean)
-    : []
-
-  if (!owner_email || !email) throw new Error('Email is required')
-  if (!name) throw new Error('Business name is required')
-
-  return { owner_email, name, email, phone, dep, services }
+function dollarsToCents(input: string | number) {
+  const s = String(input).trim().replace('$', '')
+  const n = Math.round(Number(s))
+  const allowed = [25, 50, 75, 100]
+  if (!allowed.includes(n)) throw new Error('Invalid deposit')
+  return n * 100
 }
 
 export async function POST(req: Request) {
   try {
-    const form = await req.formData()
-    const { owner_email, name, email, phone, dep, services } = sanitize(form)
+    const ct = req.headers.get('content-type') || ''
+    let body: Record<string, any>
 
-    const supabase = getSupabaseAdmin()
-    if (!supabase) return NextResponse.json({ error: 'Server error' }, { status: 500 })
-
-    // ensure unique slug
-    const base = slugify(name)
-    let suffix = 0
-    let candidate = base
-    while (true) {
-      const { data, error } = await supabase
-        .from('businesses')
-        .select('slug')
-        .eq('slug', candidate)
-        .maybeSingle()
-
-      if (error) throw error
-      if (!data) break
-      suffix++
-      candidate = `${base}-${suffix}`
+    if (ct.includes('application/json')) {
+      body = await req.json()
+    } else if (
+      ct.includes('multipart/form-data') ||
+      ct.includes('application/x-www-form-urlencoded')
+    ) {
+      const fd = await req.formData()
+      body = Object.fromEntries(fd as any)
+    } else {
+      return NextResponse.json(
+        { error: `Unsupported Content-Type: ${ct}` },
+        { status: 415 }
+      )
     }
 
-    const deposit_cents = dep * 100
+    const {
+      owner_email,
+      name,
+      slug,
+      email,
+      phone,
+      deposit,        // "$75" | "75" | 75
+      services = []   // string[]
+    } = body
 
-    const { data: created, error: insertErr } = await supabase
+    if (!owner_email || !name || !slug || !email || !deposit) {
+      return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 })
+    }
+
+    const deposit_cents = dollarsToCents(deposit)
+
+    const supabase = getSupabaseAdmin()
+    const { data, error } = await supabase
       .from('businesses')
       .insert({
         owner_email,
         name,
-        slug: candidate,
+        slug,
         email,
         phone,
-        deposit_cents,     // <-- correct column in cents
-        services,          // text[] column
+        deposit_cents,
+        services,
       })
-      .select('slug')
+      .select('id, slug')
       .single()
 
-    if (insertErr) throw insertErr
-
-    return NextResponse.json({ ok: true, slug: created.slug })
-  } catch (err: any) {
-    console.error(err)
-    return NextResponse.json({ error: err.message || 'Unknown error' }, { status: 400 })
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    return NextResponse.json({ ok: true, business: data })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message ?? 'Server error' }, { status: 500 })
   }
 }
