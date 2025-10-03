@@ -1,9 +1,7 @@
 // app/page.tsx
 import Link from 'next/link';
-import AuthGate from '@/components/AuthGate';        // alias (requires /components/AuthGate.tsx at repo root)
-// import AuthGate from '../components/AuthGate';    // <-- relative fallback if you prefer
-
-import CreatePageForm from './components/createpageform'; // keep your form where it already is
+import AuthGate from '@/components/AuthGate';
+import CreatePageForm from '@/components/CreatePageForm';
 
 export default function HomePage() {
   return (
@@ -22,15 +20,17 @@ export default function HomePage() {
           </div>
         }
         signedIn={
-          <div className="max-w-2xl space-y-6">
-            <h1 className="text-2xl font-semibold">Create your booking page</h1>
+          <div className="mx-auto max-w-2xl">
             <CreatePageForm />
-            <p className="text-sm text-muted-foreground">
-              Need to see your pages? Go to your{' '}
-              <Link href="/dashboard" className="underline underline-offset-4">
-                dashboard
-              </Link>.
-            </p>
+            <div className="mt-4 text-sm">
+              <Link href="/dashboard" className="underline">
+                Go to your dashboard
+              </Link>
+              {' · '}
+              <Link href="/logout" className="underline">
+                Sign out
+              </Link>
+            </div>
           </div>
         }
       />
