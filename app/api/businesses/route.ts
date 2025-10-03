@@ -1,45 +1,86 @@
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import getSupabaseAdmin from '@/lib/supabaseAdmin';
-import { supabaseServer } from '@/lib/supabaseServer';
+// app/api/businesses/route.ts
+import { NextResponse } from 'next/server'
+import getSupabaseAdmin from '@/lib/supabaseAdmin'
 
-const schema = z.object({
-  owner_email: z.string().email(),
-  name: z.string().min(2).max(60),
-  slug: z.string().min(2).max(64).regex(/^[a-z0-9-]+$/i, 'Letters, numbers, dashes only'),
-  email: z.string().email(),
-  phone: z.string().min(7).max(20),
-  deposit: z.number().int().refine((n) => [25, 50, 75, 100].includes(n), 'Invalid deposit'),
-  services: z.array(z.string()).optional(),
-});
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
+// (unchanged) helpers…
+function slugify(s: string) {
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function sanitize(form: FormData) {
+  const owner_email = String(form.get('owner_email') || '').trim().toLowerCase()
+  const name = String(form.get('name') || '').trim()
+  const email = String(form.get('email') || '').trim().toLowerCase()
+  const phone = String(form.get('phone') || '').trim()
+  const depositRaw = String(form.get('deposit') || '').trim()
+
+  const dep = Number(depositRaw) // expecting 25 / 50 / 75 / 100 (see <select>)
+  if (![25, 50, 75, 100].includes(dep)) throw new Error('Invalid deposit value')
+
+  const servicesRaw = String(form.get('services') || '')
+  const services = servicesRaw
+    ? servicesRaw.split(',').map(s => s.trim()).filter(Boolean)
+    : []
+
+  if (!owner_email || !email) throw new Error('Email is required')
+  if (!name) throw new Error('Business name is required')
+
+  return { owner_email, name, email, phone, dep, services }
+}
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const parsed = schema.parse(body);
+    const form = await req.formData()
+    const { owner_email, name, email, phone, dep, services } = sanitize(form)
 
-    const server = supabaseServer();
-    const { data: { user } } = await server.auth.getUser();
+    const supabase = getSupabaseAdmin()
+    if (!supabase) return NextResponse.json({ error: 'Server error' }, { status: 500 })
 
-    const admin = getSupabaseAdmin();
-    const { data, error } = await admin
+    // ensure unique slug
+    const base = slugify(name)
+    let suffix = 0
+    let candidate = base
+    while (true) {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('slug')
+        .eq('slug', candidate)
+        .maybeSingle()
+
+      if (error) throw error
+      if (!data) break
+      suffix++
+      candidate = `${base}-${suffix}`
+    }
+
+    const deposit_cents = dep * 100
+
+    const { data: created, error: insertErr } = await supabase
       .from('businesses')
-      .insert([{
-        owner_user: user?.id ?? null,
-        owner_email: parsed.owner_email,
-        name: parsed.name,
-        slug: parsed.slug.toLowerCase(),
-        email: parsed.email,
-        phone: parsed.phone,
-        deposit: parsed.deposit,
-        services: parsed.services ?? [],
-      }])
-      .select('*')
-      .single();
+      .insert({
+        owner_email,
+        name,
+        slug: candidate,
+        email,
+        phone,
+        deposit_cents,     // <-- correct column in cents
+        services,          // text[] column
+      })
+      .select('slug')
+      .single()
 
-    if (error) throw error;
-    return NextResponse.json({ ok: true, data });
+    if (insertErr) throw insertErr
+
+    return NextResponse.json({ ok: true, slug: created.slug })
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? 'Bad request' }, { status: 400 });
+    console.error(err)
+    return NextResponse.json({ error: err.message || 'Unknown error' }, { status: 400 })
   }
 }
