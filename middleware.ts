@@ -1,20 +1,38 @@
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 
-export function middleware(req: NextRequest) {
-  if (req.nextUrl.pathname.startsWith('/dashboard')) {
-    // Supabase sets one of these cookies when authenticated
-    const hasAuth =
-      req.cookies.get('sb-access-token') ||
-      req.cookies.get('supabase-auth-token') ||
-      req.cookies.get('sb:token');
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
 
-    if (!hasAuth) {
-      const url = new URL('/login', req.url);
-      return NextResponse.redirect(url);
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return req.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options: any) {
+          res.cookies.set({ name, value, ...options });
+        },
+        remove(name: string, options: any) {
+          res.cookies.set({ name, value: '', ...options, maxAge: 0 });
+        },
+      },
     }
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // require auth for /dashboard
+  if (req.nextUrl.pathname.startsWith('/dashboard') && !user) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/login';
+    url.searchParams.set('redirect', '/dashboard');
+    return NextResponse.redirect(url);
   }
-  return NextResponse.next();
+
+  return res;
 }
 
 export const config = {

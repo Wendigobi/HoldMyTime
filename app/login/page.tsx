@@ -1,65 +1,53 @@
 'use client';
-
 import { useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-export default function LoginPage() {
+export default function Login() {
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
   const [email, setEmail] = useState('');
-  const [sending, setSending] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setMsg(null); setErr(null);
-    setSending(true);
+    setErr(null);
+    const redirectTo =
+      (typeof window !== 'undefined' && `${window.location.origin}/auth/callback`) ||
+      process.env.NEXT_PUBLIC_SITE_URL + '/auth/callback';
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/dashboard`
-      }
+      options: { emailRedirectTo: redirectTo },
     });
 
-    setSending(false);
     if (error) setErr(error.message);
-    else setMsg('Check your email for the login link. 👍');
+    else setSent(true);
   }
 
   return (
-    <main className="min-h-[80vh] bg-black text-white flex items-center justify-center p-6">
-      <div className="w-full max-w-md rounded-2xl border border-amber-500/30 bg-zinc-900/60 p-6 shadow-xl">
-        <h1 className="text-3xl font-bold text-amber-400">Sign in</h1>
-        <p className="mt-2 opacity-80">
-          Enter your email and we&apos;ll send you a secure login link.
-        </p>
-
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
+    <main className="max-w-md mx-auto px-4 py-10 text-white">
+      <h1 className="text-3xl font-semibold mb-6">Sign in</h1>
+      {sent ? (
+        <p>Check your email for a login link.</p>
+      ) : (
+        <form onSubmit={onSubmit} className="grid gap-3">
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full rounded-lg bg-black/50 border border-amber-500/30 px-4 py-3 outline-none focus:border-amber-400"
+            className="w-full rounded bg-black/60 border border-gray-700 px-3 py-2 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
-          <button
-            type="submit"
-            disabled={sending}
-            className="w-full rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold py-3 transition disabled:opacity-60"
-          >
-            {sending ? 'Sending…' : 'Send magic link'}
+          <button className="px-4 py-2 rounded bg-amber-500 text-black font-medium hover:bg-amber-400">
+            Send magic link
           </button>
+          {err && <p className="text-red-500">{err}</p>}
         </form>
-
-        {msg && <p className="mt-4 text-green-400">{msg}</p>}
-        {err && <p className="mt-4 text-red-400">{err}</p>}
-      </div>
+      )}
     </main>
   );
 }

@@ -1,10 +1,9 @@
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
-import { redirect } from 'next/navigation';
+import Link from 'next/link';
 
-export default async function DashboardPage() {
+export default async function Dashboard() {
   const cookieStore = cookies();
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -13,42 +12,48 @@ export default async function DashboardPage() {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
+        set() {},
+        remove() {},
       },
     }
   );
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  // middleware should have redirected if no user
+  if (!user) return null;
+
+  const { data: businesses, error } = await supabase
+    .from('businesses')
+    .select('id, business_name, deposit_cents, contact_email, phone')
+    .order('created_at', { ascending: false });
 
   return (
-    <main className="min-h-[80vh] bg-black text-white px-6 py-12">
-      <div className="mx-auto max-w-5xl">
-        <header className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">
-            <span className="text-amber-400">Your</span> Dashboard
-          </h1>
-          <form action="/logout" method="post">
-            {/* we’ll wire the /logout route below */}
-            <button className="rounded-lg bg-zinc-800 border border-amber-500/30 px-4 py-2 hover:bg-zinc-700">
-              Sign out
-            </button>
-          </form>
-        </header>
-
-        <section className="mt-10 grid gap-6">
-          <div className="rounded-2xl border border-amber-500/30 bg-zinc-900/40 p-6">
-            <h2 className="text-xl font-semibold">Welcome, {user.email}</h2>
-            <p className="opacity-80 mt-1">
-              This is a starter dashboard. Next steps:
-            </p>
-            <ul className="list-disc pl-6 mt-3 space-y-1 opacity-90">
-              <li>Query your <code>businesses</code> table and list pages you own.</li>
-              <li>Add “Create new booking page” button that posts to <code>/api/businesses</code>.</li>
-              <li>Link each page to its public URL.</li>
-            </ul>
-          </div>
-        </section>
+    <main className="max-w-5xl mx-auto px-4 py-10 text-white">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-semibold">Your booking pages</h1>
+        <form action="/logout" method="post">
+          <button className="px-3 py-2 rounded bg-amber-500 text-black hover:bg-amber-400">Sign out</button>
+        </form>
       </div>
+
+      {error && <p className="text-red-500">{error.message}</p>}
+
+      {!businesses?.length ? (
+        <p className="text-gray-400">No pages yet. Create one on the home page.</p>
+      ) : (
+        <ul className="grid gap-3">
+          {businesses.map((b) => (
+            <li key={b.id} className="rounded border border-gray-700 bg-black/40 p-4">
+              <div className="font-medium text-lg">{b.business_name}</div>
+              <div className="text-sm text-gray-400">
+                Deposit: ${(b.deposit_cents / 100).toFixed(0)} &middot; {b.contact_email} &middot; {b.phone}
+              </div>
+              {/* Insert your public booking url once that page exists */}
+              {/* <Link href={`/book/${b.id}`} className="text-amber-400 hover:underline">Open public page</Link> */}
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }

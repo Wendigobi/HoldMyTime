@@ -1,70 +1,70 @@
-import { NextResponse } from 'next/server'
-import getSupabaseAdmin from '@/lib/supabaseAdmin'
-
-export const runtime = 'nodejs'
-
-function dollarsToCents(input: string | number) {
-  const s = String(input).trim().replace('$', '')
-  const n = Math.round(Number(s))
-  const allowed = [25, 50, 75, 100]
-  if (!allowed.includes(n)) throw new Error('Invalid deposit')
-  return n * 100
-}
+// app/api/businesses/route.ts
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
 
 export async function POST(req: Request) {
-  try {
-    const ct = req.headers.get('content-type') || ''
-    let body: Record<string, any>
+  const cookieStore = cookies();
 
-    if (ct.includes('application/json')) {
-      body = await req.json()
-    } else if (
-      ct.includes('multipart/form-data') ||
-      ct.includes('application/x-www-form-urlencoded')
-    ) {
-      const fd = await req.formData()
-      body = Object.fromEntries(fd as any)
-    } else {
-      return NextResponse.json(
-        { error: `Unsupported Content-Type: ${ct}` },
-        { status: 415 }
-      )
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: any) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: any) {
+          cookieStore.set({ name, value: '', ...options, maxAge: 0 });
+        },
+      },
     }
+  );
 
-    const {
-      owner_email,
-      name,
-      slug,
-      email,
-      phone,
-      deposit,        // "$75" | "75" | 75
-      services = []   // string[]
-    } = body
-
-    if (!owner_email || !name || !slug || !email || !deposit) {
-      return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 })
-    }
-
-    const deposit_cents = dollarsToCents(deposit)
-
-    const supabase = getSupabaseAdmin()
-    const { data, error } = await supabase
-      .from('businesses')
-      .insert({
-        owner_email,
-        name,
-        slug,
-        email,
-        phone,
-        deposit_cents,
-        services,
-      })
-      .select('id, slug')
-      .single()
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-    return NextResponse.json({ ok: true, business: data })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message ?? 'Server error' }, { status: 500 })
+  // server-side auth check
+  const { data: { user }, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !user) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
+
+  // parse form body (we purposely expect form fields)
+  const form = await req.formData();
+  const owner_email = String(form.get('owner_email') ?? '');
+  const business_name = String(form.get('business_name') ?? '');
+  const phone = String(form.get('phone') ?? '');
+  const contact_email = String(form.get('contact_email') ?? '');
+  const deposit = String(form.get('deposit') ?? '$25'); // "$25", "$50", "$75", "$100"
+
+  if (!owner_email || !business_name || !phone || !contact_email || !deposit) {
+    return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
+  }
+
+  // normalize deposit → cents
+  const cents = Number((deposit || '').replace('$', '')) * 100;
+  if (![2500, 5000, 7500, 10000].includes(cents)) {
+    return NextResponse.json({ error: 'Invalid deposit.' }, { status: 400 });
+  }
+
+  // write to DB; RLS should require owner_user = auth.uid()
+  const { data, error } = await supabase
+    .from('businesses')
+    .insert({
+      owner_user: user.id,        // <-- important
+      owner_email,
+      business_name,
+      phone,
+      contact_email,
+      deposit_cents: cents,
+    })
+    .select('*')
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  return NextResponse.json({ ok: true, business: data }, { status: 201 });
 }
