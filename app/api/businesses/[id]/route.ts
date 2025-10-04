@@ -48,23 +48,42 @@ export async function DELETE(
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
-  // If you DON'T have ON DELETE CASCADE on dependent tables,
-  // uncomment these explicit deletes first:
-  //
-  // await supabase.from('bookings').delete().eq('business_id', id);
-  // await supabase.from('pages').delete().eq('business_id', id);
-  // ...add any other child tables that reference businesses.id
-
-  // Delete only if the business belongs to the current user
-  const { error } = await supabase
+  // First verify the business belongs to the current user
+  const { data: business, error: fetchError } = await supabase
     .from('businesses')
-    .delete()
+    .select('id, owner_id')
     .eq('id', id)
-    .eq('owner_id', user.id);
+    .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  if (fetchError || !business) {
+    return NextResponse.json({ error: 'Business not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ ok: true });
+  if (business.owner_id !== user.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  }
+
+  // Delete related bookings first (if they exist)
+  const { error: bookingsError } = await supabase
+    .from('bookings')
+    .delete()
+    .eq('business_id', id);
+
+  if (bookingsError) {
+    console.error('Error deleting bookings:', bookingsError);
+    // Continue anyway - bookings table might not exist or be empty
+  }
+
+  // Now delete the business
+  const { error: deleteError } = await supabase
+    .from('businesses')
+    .delete()
+    .eq('id', id);
+
+  if (deleteError) {
+    console.error('Error deleting business:', deleteError);
+    return NextResponse.json({ error: deleteError.message }, { status: 400 });
+  }
+
+  return NextResponse.json({ ok: true, deleted: true });
 }
