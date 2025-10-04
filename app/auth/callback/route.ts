@@ -1,30 +1,18 @@
 import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { redirect } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
-interface SearchParams {
-  code?: string;
-  error_description?: string;
-}
-
-export default async function AuthCallbackPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
-  const params = await searchParams;
-  const cookieStore = await cookies();
-  const code = params.code;
-  const error = params.error_description;
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const code = searchParams.get('code');
+  const error = searchParams.get('error_description');
 
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(error)}`);
+    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error)}`, request.url));
   }
 
   if (code) {
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -46,11 +34,12 @@ export default async function AuthCallbackPage({
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
-      redirect(`/login?error=${encodeURIComponent(exchangeError.message)}`);
+      console.error('Code exchange error:', exchangeError);
+      return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(exchangeError.message)}`, request.url));
     }
 
-    redirect('/dashboard');
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  redirect('/dashboard');
+  return NextResponse.redirect(new URL('/dashboard', request.url));
 }
