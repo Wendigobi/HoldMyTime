@@ -3,15 +3,19 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 
-// Ensure Node runtime so Supabase cookie helpers work consistently
 export const runtime = 'nodejs';
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  // Await params for Next.js 15+ compatibility
+  const { id } = await context.params;
+  
+  console.log('[DELETE] Starting delete for business ID:', id);
+  
   if (!id) {
+    console.error('[DELETE] Missing business ID');
     return NextResponse.json({ error: 'Missing business id' }, { status: 400 });
   }
 
@@ -28,7 +32,7 @@ export async function DELETE(
           try {
             cookieStore.set({ name, value, ...options });
           } catch {
-            // no-op: the API still works even if we can't set cookies here
+            // no-op
           }
         },
         remove(name: string, options: any) {
@@ -45,8 +49,11 @@ export async function DELETE(
   // Auth check
   const { data: { user }, error: userErr } = await supabase.auth.getUser();
   if (userErr || !user) {
+    console.error('[DELETE] Auth error:', userErr);
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
+
+  console.log('[DELETE] User authenticated:', user.id);
 
   // First verify the business belongs to the current user
   const { data: business, error: fetchError } = await supabase
@@ -55,35 +62,57 @@ export async function DELETE(
     .eq('id', id)
     .single();
 
-  if (fetchError || !business) {
+  if (fetchError) {
+    console.error('[DELETE] Fetch error:', fetchError);
+    return NextResponse.json({ error: 'Business not found: ' + fetchError.message }, { status: 404 });
+  }
+
+  if (!business) {
+    console.error('[DELETE] Business not found');
     return NextResponse.json({ error: 'Business not found' }, { status: 404 });
   }
 
   if (business.owner_id !== user.id) {
+    console.error('[DELETE] Unauthorized: business owner_id', business.owner_id, 'user id', user.id);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
-  // Delete related bookings first (if they exist)
-  const { error: bookingsError } = await supabase
+  console.log('[DELETE] Business verified, deleting bookings...');
+
+  // Delete related bookings first
+  const { error: bookingsError, count } = await supabase
     .from('bookings')
     .delete()
     .eq('business_id', id);
 
   if (bookingsError) {
-    console.error('Error deleting bookings:', bookingsError);
-    // Continue anyway - bookings table might not exist or be empty
+    console.error('[DELETE] Bookings delete error:', bookingsError);
+  } else {
+    console.log('[DELETE] Deleted bookings count:', count);
   }
+
+  console.log('[DELETE] Deleting business...');
 
   // Now delete the business
-  const { error: deleteError } = await supabase
+  const { error: deleteError, data: deleteData } = await supabase
     .from('businesses')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .select();
 
   if (deleteError) {
-    console.error('Error deleting business:', deleteError);
-    return NextResponse.json({ error: deleteError.message }, { status: 400 });
+    console.error('[DELETE] Business delete error:', deleteError);
+    return NextResponse.json({ 
+      error: 'Failed to delete business: ' + deleteError.message,
+      details: deleteError 
+    }, { status: 400 });
   }
 
-  return NextResponse.json({ ok: true, deleted: true });
+  console.log('[DELETE] Business deleted successfully:', deleteData);
+
+  return NextResponse.json({ 
+    ok: true, 
+    deleted: true,
+    message: 'Business and related bookings deleted successfully' 
+  });
 }
