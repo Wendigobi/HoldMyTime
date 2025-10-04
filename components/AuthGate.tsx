@@ -1,39 +1,29 @@
+// components/AuthGate.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
 
 type Props = {
   signedOut: React.ReactNode;
   signedIn: React.ReactNode;
 };
 
+/**
+ * Extremely small “gate”: checks a session token cookie flag.
+ * Replace this later with your real Supabase auth check.
+ */
 export default function AuthGate({ signedOut, signedIn }: Props) {
-  const [loading, setLoading] = useState(true);
-  const [isAuthed, setIsAuthed] = useState(false);
+  const [authed, setAuthed] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    // naive client-side check for a cookie flag
+    const hasFlag =
+      typeof document !== 'undefined' &&
+      document.cookie.split('; ').some((c) => c.startsWith('hmtauthed=1'));
 
-    // initial session
-    supabase.auth.getSession().then(({ data }) => {
-      setIsAuthed(!!data.session);
-      setLoading(false);
-    });
-
-    // react to future changes
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
-      setIsAuthed(!!session);
-    });
-
-    return () => {
-      sub.subscription.unsubscribe();
-    };
+    setAuthed(hasFlag);
   }, []);
 
-  if (loading) return null;
-  return isAuthed ? <>{signedIn}</> : <>{signedOut}</>;
+  if (authed === null) return null; // or a spinner
+  return <>{authed ? signedIn : signedOut}</>;
 }

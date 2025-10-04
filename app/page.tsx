@@ -1,5 +1,7 @@
 // app/page.tsx
 import Link from 'next/link';
+
+// IMPORTANT: use RELATIVE imports, not the '@' alias
 import AuthGate from '../components/AuthGate';
 import CreatePageForm from '../components/CreatePageForm';
 
@@ -15,22 +17,23 @@ export default function HomePage() {
               href="/login"
               className="inline-flex items-center rounded-md bg-amber-500 px-4 py-2 font-medium text-black hover:bg-amber-400"
             >
-              Sign in
+              Login / Sign up
             </Link>
           </div>
         }
         signedIn={
-          <div className="mx-auto max-w-2xl">
+          <div className="max-w-3xl space-y-8">
+            <header className="flex items-center justify-between">
+              <h1 className="text-2xl font-semibold">Create your booking page</h1>
+              <Link
+                href="/dashboard"
+                className="rounded-md border border-amber-500/40 bg-black px-3 py-1.5 text-amber-300 hover:bg-amber-500/10"
+              >
+                Go to Dashboard
+              </Link>
+            </header>
+
             <CreatePageForm />
-            <div className="mt-4 text-sm">
-              <Link href="/dashboard" className="underline">
-                Go to your dashboard
-              </Link>
-              {' · '}
-              <Link href="/logout" className="underline">
-                Sign out
-              </Link>
-            </div>
           </div>
         }
       />
