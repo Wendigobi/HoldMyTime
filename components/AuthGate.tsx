@@ -2,7 +2,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createBrowserClient, type Session } from '@supabase/ssr';
+import { createBrowserClient } from '@supabase/ssr';
+import type { Session } from '@supabase/supabase-js';
 
 type Props = {
   signedOut: React.ReactNode;
@@ -39,6 +40,6 @@ export default function AuthGate({ signedOut, signedIn }: Props) {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (loading) return null; // could render a spinner
+  if (loading) return null; // or a spinner/skeleton
   return <>{session ? signedIn : signedOut}</>;
 }
