@@ -6,6 +6,7 @@ import { SITE_URL } from '../../lib/constants';
 import type { Business } from '../../lib/types';
 import DeleteBusinessButton from '../../components/DeleteBusinessButton';
 import LogoutButton from '../../components/LogoutButton';
+import SubscriptionButton from '../../components/SubscriptionButton';
 
 export const runtime = 'nodejs';
 
@@ -48,13 +49,28 @@ export default async function Dashboard() {
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false });
 
+  // Check if user has active subscription or trial
+  const { data: userData } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  const hasActiveAccess = userData?.subscription_status === 'active' || userData?.subscription_status === 'trial';
+  const isTrialing = userData?.subscription_status === 'trial';
+
   return (
     <main className="min-h-screen px-6 py-12">
       <div className="container max-w-6xl">
-        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fadeIn">
           <div>
             <h1 className="mb-2 text-4xl font-bold">Dashboard</h1>
             <p className="text-secondary">Manage your booking pages</p>
+            {isTrialing && userData?.trial_ends_at && (
+              <p className="text-sm text-gold mt-1">
+                Free trial ends {new Date(userData.trial_ends_at).toLocaleDateString()}
+              </p>
+            )}
           </div>
           <div className="flex gap-3">
             <Link href="/" className="btn-outline inline-block">
@@ -63,6 +79,18 @@ export default async function Dashboard() {
             <LogoutButton />
           </div>
         </header>
+
+        {!hasActiveAccess && (
+          <div className="mb-8 card-gold animate-fadeIn">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2 text-gold">Start Your 14-Day Free Trial</h2>
+              <p className="text-secondary mb-6">
+                Get unlimited booking pages and secure deposit collection for only $15/month. No credit card required for trial.
+              </p>
+              <SubscriptionButton />
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 rounded-lg border-2 border-red-600 bg-red-950/30 p-4">
@@ -85,8 +113,8 @@ export default async function Dashboard() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2">
-            {businesses.map((b: Business) => (
-              <div key={b.id} className="card group">
+            {businesses.map((b: Business, idx: number) => (
+              <div key={b.id} className="card group animate-slideUp" style={{ animationDelay: `${idx * 0.1}s` }}>
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="mb-2 text-xl font-bold text-gold">{b.business_name}</h3>

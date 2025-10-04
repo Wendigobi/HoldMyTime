@@ -5,9 +5,10 @@ import { createServerClient } from '@supabase/ssr';
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const cookieStore = cookies();
+  const { id } = await params;
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,8 +32,6 @@ export async function DELETE(
   if (userErr || !user) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
-
-  const { id } = params;
 
   // Delete the business (RLS will ensure user owns it)
   const { error } = await supabase

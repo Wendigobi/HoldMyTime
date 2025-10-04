@@ -35,3 +35,13 @@ export interface Booking {
 
 export type DepositTier = 25 | 50 | 75 | 100;
 export type DepositTierCents = 2500 | 5000 | 7500 | 10000;
+
+export interface User {
+  id: string;
+  email: string;
+  created_at: string;
+  subscription_status: 'trial' | 'active' | 'canceled' | 'past_due' | 'none';
+  subscription_id?: string;
+  trial_ends_at?: string;
+  current_period_end?: string;
+}

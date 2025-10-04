@@ -36,7 +36,7 @@ export default function DeleteBusinessButton({ businessId, businessName }: { bus
     <button
       onClick={handleDelete}
       disabled={isDeleting}
-      className="text-sm text-red-400 hover:text-red-300 disabled:opacity-50"
+      className="btn-danger btn-small w-full"
     >
       {isDeleting ? 'Deleting...' : 'Delete'}
     </button>

@@ -56,10 +56,10 @@ export default function Login() {
 
   return (
     <div className="centered-layout">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md animate-fadeIn">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold mb-3">HoldMyTime</h1>
-          <p className="text-secondary text-lg">Welcome back! Sign in to continue</p>
+          <p className="text-secondary text-lg">Sign in or create your account</p>
         </div>
 
         <div className="card-gold">
@@ -97,7 +97,7 @@ export default function Login() {
                   <div className="w-full border-t border-white/20"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-card text-muted">Or sign in with email</span>
+                  <span className="px-4 bg-card text-muted">Or continue with email</span>
                 </div>
               </div>
 
