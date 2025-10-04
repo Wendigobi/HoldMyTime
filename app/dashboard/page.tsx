@@ -4,6 +4,8 @@ import { createServerClient } from '@supabase/ssr';
 import Link from 'next/link';
 import { SITE_URL } from '../../lib/constants';
 import type { Business } from '../../lib/types';
+import DeleteBusinessButton from '../../components/DeleteBusinessButton';
+import LogoutButton from '../../components/LogoutButton';
 
 export const runtime = 'nodejs';
 
@@ -54,9 +56,12 @@ export default async function Dashboard() {
             <h1 className="mb-2 text-4xl font-bold">Dashboard</h1>
             <p className="text-secondary">Manage your booking pages</p>
           </div>
-          <Link href="/" className="btn-outline inline-block">
-            + Create New Page
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/" className="btn-outline inline-block">
+              + Create New Page
+            </Link>
+            <LogoutButton />
+          </div>
         </header>
 
         {error && (
@@ -99,9 +104,12 @@ export default async function Dashboard() {
                       )}
                     </div>
                   </div>
-                  <Link href={`/business/${b.slug}`} className="btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
-                    View Page
-                  </Link>
+                  <div className="flex flex-col gap-2">
+                    <Link href={`/business/${b.slug}`} className="btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                      View Page
+                    </Link>
+                    <DeleteBusinessButton businessId={b.id} businessName={b.business_name} />
+                  </div>
                 </div>
 
                 <div className="mt-4 rounded-lg bg-black/50 p-3">
