@@ -2,14 +2,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function DeleteBusinessButton({
   businessId,
   businessName,
 }: { businessId: string; businessName: string }) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const router = useRouter();
 
   const handleDelete = async () => {
     if (!confirm(`Delete "${businessName}"? This cannot be undone.`)) return;
@@ -27,16 +25,16 @@ export default function DeleteBusinessButton({
         const data = await res.json().catch(() => ({}));
         const errorMessage = data.error || `Failed to delete business (Status: ${res.status})`;
         alert(errorMessage);
+        setIsDeleting(false);
         return;
       }
 
-      // Successfully deleted
+      // Successfully deleted - reload the page to show updated list
       alert(`"${businessName}" has been deleted successfully.`);
-      router.refresh();
+      window.location.reload();
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Unknown error';
       alert(`Network error deleting business: ${errorMsg}`);
-    } finally {
       setIsDeleting(false);
     }
   };
