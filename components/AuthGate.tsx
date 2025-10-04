@@ -40,6 +40,6 @@ export default function AuthGate({ signedOut, signedIn }: Props) {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (loading) return null; // or a spinner/skeleton
+  if (loading) return null;
   return <>{session ? signedIn : signedOut}</>;
 }
