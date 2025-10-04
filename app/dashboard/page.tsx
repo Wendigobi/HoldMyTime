@@ -9,6 +9,8 @@ import LogoutButton from '../../components/LogoutButton';
 import SubscriptionButton from '../../components/SubscriptionButton';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function Dashboard() {
   const cookieStore = cookies();
