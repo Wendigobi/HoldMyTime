@@ -1,10 +1,8 @@
-// app/auth/callback/CallbackClient.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
-import type { Route } from 'next';
 
 export default function CallbackClient() {
   const router = useRouter();
@@ -34,31 +32,38 @@ export default function CallbackClient() {
         }
       }
 
-      // Only allow internal paths starting with "/"
-      const candidate = params?.get('next') ?? '/dashboard';
-      const safeNext =
-        typeof candidate === 'string' && candidate.startsWith('/') ? candidate : '/dashboard';
-
-      router.replace(safeNext as Route);
+      // Redirect to dashboard after successful auth
+      router.push('/dashboard');
       router.refresh();
     }
 
     run();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [params, router]);
 
   return (
-    <main className="grid min-h-screen place-items-center px-6 py-12">
-      <div className="rounded-2xl border border-amber-500/25 bg-black/40 p-6 text-center text-amber-200 backdrop-blur">
+    <div className="centered-layout">
+      <div className="card-gold text-center max-w-md">
         {error ? (
           <>
-            <p className="mb-2 text-red-400">Auth error</p>
-            <p className="text-sm">{error}</p>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold mb-2 text-red-400">Authentication Error</h2>
+            <p className="text-secondary mb-6">{error}</p>
+            <a href="/login" className="btn">
+              Back to Login
+            </a>
           </>
         ) : (
-          <p>Signing you in…</p>
+          <>
+            <div className="spinner mx-auto mb-4"></div>
+            <p className="text-xl text-gold font-semibold">Signing you in...</p>
+            <p className="text-secondary mt-2">Please wait a moment</p>
+          </>
         )}
       </div>
-    </main>
+    </div>
   );
 }
