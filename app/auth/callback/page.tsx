@@ -6,6 +6,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import type { Route } from 'next';
 
+// prevent prerender/export errors
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const runtime = 'nodejs';
+
 export default function AuthCallback() {
   const router = useRouter();
   const params = useSearchParams();
@@ -34,7 +39,7 @@ export default function AuthCallback() {
         }
       }
 
-      // Only allow internal paths starting with "/" and default to /dashboard
+      // Only allow internal app paths
       const candidate = params?.get('next') ?? '/dashboard';
       const safeNext =
         typeof candidate === 'string' && candidate.startsWith('/') ? candidate : '/dashboard';
