@@ -2,6 +2,8 @@
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import Link from 'next/link';
+import BookingForm from './BookingForm';
+import type { Business } from '../../../lib/types';
 
 export const runtime = 'nodejs';
 
@@ -31,49 +33,65 @@ export default async function PublicBusinessPage({ params }: Props) {
 
   if (error || !business) {
     return (
-      <main className="grid min-h-screen place-items-center px-6 py-12">
-        <div className="rounded-2xl border border-amber-500/25 bg-black/40 p-6 text-amber-200 backdrop-blur">
-          <p>We couldn’t find this booking page.</p>
+      <main className="centered-layout">
+        <div className="card max-w-md text-center">
+          <svg className="mx-auto mb-4 h-16 w-16 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h2 className="mb-2 text-2xl font-bold text-gold">Page Not Found</h2>
+          <p className="mb-6 text-secondary">
+            We couldn't find this booking page. Please check the URL and try again.
+          </p>
+          <Link href="/" className="btn inline-block">
+            Go Home
+          </Link>
         </div>
       </main>
     );
   }
 
-  const deposit = (business.deposit_cents ?? 0) / 100;
-  const payLink = business.stripe_pay_link_url as string | null;
+  const businessData = business as Business;
+  const deposit = (businessData.deposit_cents ?? 0) / 100;
 
   return (
     <main className="min-h-screen px-6 py-12">
-      <div className="mx-auto max-w-3xl space-y-6">
-        <header className="rounded-3xl border border-amber-500/25 bg-black/40 p-6 shadow-[0_8px_40px_rgba(255,200,0,0.08)] backdrop-blur">
-          <h1 className="text-3xl font-bold text-amber-300">{business.business_name}</h1>
-          <p className="mt-1 text-amber-200/80">
-            Deposit required: <span className="font-semibold text-amber-200">${deposit.toFixed(0)}</span>
+      <div className="container max-w-4xl">
+        <header className="card-gold mb-8 text-center">
+          <div className="mb-4">
+            <svg className="mx-auto h-12 w-12 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h1 className="mb-3 text-4xl font-bold">{businessData.business_name}</h1>
+          <p className="mb-2 text-lg text-secondary">
+            Secure your appointment with a <span className="font-bold text-gold">${deposit.toFixed(0)}</span> deposit
+          </p>
+          <p className="text-sm text-muted">
+            Book your time slot and we'll confirm your appointment
           </p>
         </header>
 
-        <section className="rounded-2xl border border-amber-500/20 bg-black/40 p-6 backdrop-blur">
-          <h2 className="mb-3 text-xl font-semibold text-amber-300">Book an appointment</h2>
-          <p className="mb-4 text-amber-200/85">
-            Pay a small deposit to hold your time. You’ll get an email/text confirmation from the business.
+        <div className="card">
+          <h2 className="mb-4 text-2xl font-bold text-gold">Book Your Appointment</h2>
+          <p className="mb-6 text-secondary">
+            Fill out the form below to secure your time slot. You'll be redirected to Stripe for secure payment processing.
           </p>
-          {payLink ? (
-            <a
-              href={payLink}
-              className="inline-block rounded-xl bg-amber-500 px-5 py-2.5 font-medium text-black hover:bg-amber-400"
-            >
-              Book now
-            </a>
-          ) : (
-            <div className="rounded-xl border border-amber-500/30 bg-black/50 p-4 text-amber-200/80">
-              <p className="mb-2">The business hasn’t linked a Stripe Pay Link yet.</p>
-              <p className="text-sm">
-                Owner: add <code className="rounded bg-black/60 px-1">stripe_pay_link_url</code> for this page in the
-                <Link href="/dashboard" className="underline"> dashboard</Link>.
-              </p>
-            </div>
-          )}
-        </section>
+
+          <BookingForm
+            businessId={businessData.id}
+            deposit={deposit}
+            support={{
+              phone: businessData.phone,
+              email: businessData.contact_email,
+            }}
+          />
+        </div>
+
+        <div className="mt-6 text-center">
+          <p className="text-xs text-muted">
+            Powered by HoldMyTime • Secure payments via Stripe
+          </p>
+        </div>
       </div>
     </main>
   );

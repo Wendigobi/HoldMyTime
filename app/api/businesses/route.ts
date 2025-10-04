@@ -52,7 +52,7 @@ export async function POST(req: Request) {
   const { data, error } = await supabase
     .from('businesses')
     .insert({
-      owner_user: user.id,        // <-- important
+      owner_id: user.id,        // <-- important
       owner_email,
       business_name,
       phone,

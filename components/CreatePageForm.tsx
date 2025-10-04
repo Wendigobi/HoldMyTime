@@ -4,8 +4,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
-
-const DEPOSITS = [25, 50, 75, 100];
+import { DEPOSIT_TIERS, SITE_URL } from '../lib/constants';
+import type { DepositTier } from '../lib/types';
 
 function slugify(name: string) {
   return name
@@ -30,7 +30,7 @@ export default function CreatePageForm() {
   const [businessName, setBusinessName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [deposit, setDeposit] = useState<number>(50);
+  const [deposit, setDeposit] = useState<DepositTier>(50);
   const [slug, setSlug] = useState('');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -89,13 +89,15 @@ export default function CreatePageForm() {
   }
 
   return (
-    <div className="rounded-2xl border border-amber-500/20 bg-black/40 p-6 shadow-[0_8px_40px_rgba(255,200,0,0.08)] backdrop-blur">
-      <h3 className="mb-4 text-xl font-semibold text-amber-300">Create booking page</h3>
-      <form onSubmit={onSubmit} className="grid gap-4">
+    <div className="card-gold max-w-3xl mx-auto">
+      <h3 className="mb-6 text-2xl font-bold text-gold">Create Booking Page</h3>
+      <p className="mb-6 text-secondary">Set up your professional booking page in minutes</p>
+
+      <form onSubmit={onSubmit} className="space-y-6">
         <div>
-          <label className="mb-1 block text-sm text-amber-200/90">Business name</label>
+          <label className="mb-2 block text-sm font-medium text-secondary">Business Name</label>
           <input
-            className="w-full rounded-xl border border-amber-500/30 bg-black/60 px-3 py-2 text-amber-50 outline-none placeholder-amber-400/50"
+            className="field"
             placeholder="e.g., Jackson Heating & Air"
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
@@ -103,12 +105,12 @@ export default function CreatePageForm() {
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm text-amber-200/90">Contact email</label>
+            <label className="mb-2 block text-sm font-medium text-secondary">Contact Email</label>
             <input
               type="email"
-              className="w-full rounded-xl border border-amber-500/30 bg-black/60 px-3 py-2 text-amber-50 outline-none placeholder-amber-400/50"
+              className="field"
               placeholder="owner@business.com"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
@@ -116,9 +118,10 @@ export default function CreatePageForm() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm text-amber-200/90">Phone</label>
+            <label className="mb-2 block text-sm font-medium text-secondary">Phone (Optional)</label>
             <input
-              className="w-full rounded-xl border border-amber-500/30 bg-black/60 px-3 py-2 text-amber-50 outline-none placeholder-amber-400/50"
+              type="tel"
+              className="field"
               placeholder="(555) 555-5555"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
@@ -126,21 +129,21 @@ export default function CreatePageForm() {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm text-amber-200/90">Deposit</label>
+            <label className="mb-2 block text-sm font-medium text-secondary">Deposit Amount</label>
             <div className="flex flex-wrap gap-2">
-              {DEPOSITS.map((d) => (
+              {DEPOSIT_TIERS.map((d) => (
                 <button
                   key={d}
                   type="button"
                   onClick={() => setDeposit(d)}
-                  className={[
-                    'rounded-xl border px-3 py-2 text-sm transition',
+                  className={
                     deposit === d
-                      ? 'border-amber-400 bg-amber-500 text-black'
-                      : 'border-amber-500/30 bg-black/60 text-amber-200 hover:border-amber-400/70',
-                  ].join(' ')}
+                      ? 'btn'
+                      : 'btn-outline'
+                  }
+                  style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
                 >
                   ${d}
                 </button>
@@ -148,27 +151,31 @@ export default function CreatePageForm() {
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-sm text-amber-200/90">Page URL slug</label>
+            <label className="mb-2 block text-sm font-medium text-secondary">Page URL Slug</label>
             <input
-              className="w-full rounded-xl border border-amber-500/30 bg-black/60 px-3 py-2 text-amber-50 outline-none placeholder-amber-400/50"
+              className="field"
               value={slug}
               onChange={(e) => setSlug(slugify(e.target.value))}
               required
             />
-            <p className="mt-1 text-xs text-amber-300/70">
-              Your public page: {process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.holdmytime.io'}/business/{slug || '<slug>'}
+            <p className="mt-2 text-xs text-muted">
+              Your public page: <span className="text-gold">{SITE_URL}/business/{slug || '<slug>'}</span>
             </p>
           </div>
         </div>
 
-        {err && <p className="text-sm text-red-400">{err}</p>}
+        {err && (
+          <div className="rounded-lg border-2 border-red-600 bg-red-950/30 p-3">
+            <p className="text-sm text-red-400">{err}</p>
+          </div>
+        )}
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4 pt-4">
           <button
             disabled={saving}
-            className="rounded-xl bg-amber-500 px-4 py-2 font-medium text-black hover:bg-amber-400 disabled:opacity-60"
+            className="btn"
           >
-            {saving ? 'Creating…' : 'Create booking page'}
+            {saving ? 'Creating…' : 'Create Booking Page'}
           </button>
         </div>
       </form>

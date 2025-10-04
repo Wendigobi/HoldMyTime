@@ -2,23 +2,6 @@
 
 import { useState } from "react";
 
-function Label(props: React.LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label {...props} className="block text-sm font-medium text-gray-700 mb-1" />;
-}
-
-function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  const { className, ...rest } = props;
-  return (
-    <input
-      {...rest}
-      className={
-        "w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 " +
-        (className ?? "")
-      }
-    />
-  );
-}
-
 export default function BookingForm({
   businessId,
   deposit,
@@ -94,67 +77,157 @@ export default function BookingForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form onSubmit={onSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div>
-          <Label htmlFor="name">Full name</Label>
-          <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-        </div>
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <label htmlFor="name" className="mb-2 block text-sm font-medium text-secondary">
+            Full Name *
+          </label>
+          <input
+            id="name"
+            className="field"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="John Doe"
+            required
+          />
         </div>
 
         <div>
-          <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <label htmlFor="email" className="mb-2 block text-sm font-medium text-secondary">
+            Email *
+          </label>
+          <input
+            id="email"
+            type="email"
+            className="field"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="john@example.com"
+            required
+          />
         </div>
+
         <div>
-          <Label htmlFor="service">Service</Label>
-          <Input id="service" value={service} onChange={(e) => setService(e.target.value)} />
+          <label htmlFor="phone" className="mb-2 block text-sm font-medium text-secondary">
+            Phone
+          </label>
+          <input
+            id="phone"
+            type="tel"
+            className="field"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="(555) 123-4567"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="service" className="mb-2 block text-sm font-medium text-secondary">
+            Service Type
+          </label>
+          <input
+            id="service"
+            className="field"
+            value={service}
+            onChange={(e) => setService(e.target.value)}
+            placeholder="e.g., HVAC Repair"
+          />
         </div>
 
         <div className="md:col-span-2">
-          <Label htmlFor="address">Address</Label>
-          <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} />
+          <label htmlFor="address" className="mb-2 block text-sm font-medium text-secondary">
+            Service Address
+          </label>
+          <input
+            id="address"
+            className="field"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="123 Main St, City, State ZIP"
+          />
         </div>
 
         <div>
-          <Label htmlFor="date">Date</Label>
-          <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <label htmlFor="date" className="mb-2 block text-sm font-medium text-secondary">
+            Preferred Date
+          </label>
+          <input
+            id="date"
+            type="date"
+            className="field"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
         </div>
+
         <div>
-          <Label htmlFor="time">Time</Label>
-          <Input id="time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+          <label htmlFor="time" className="mb-2 block text-sm font-medium text-secondary">
+            Preferred Time
+          </label>
+          <input
+            id="time"
+            type="time"
+            className="field"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+          />
         </div>
 
         <div className="md:col-span-2">
-          <Label htmlFor="notes">Notes (optional)</Label>
-          <Input id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <label htmlFor="notes" className="mb-2 block text-sm font-medium text-secondary">
+            Additional Notes (Optional)
+          </label>
+          <input
+            id="notes"
+            className="field"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Any special requests or details..."
+          />
         </div>
       </div>
 
-      {err && <p className="text-sm text-red-600">{err}</p>}
+      {err && (
+        <div className="rounded-lg border-2 border-red-600 bg-red-950/30 p-3">
+          <p className="text-sm text-red-400">{err}</p>
+        </div>
+      )}
 
-      <div className="flex items-center gap-3">
+      <div className="space-y-4 rounded-lg bg-black/50 p-4">
+        <div className="flex items-center justify-between">
+          <span className="text-secondary">Deposit Amount:</span>
+          <span className="text-2xl font-bold text-gold">${deposit}</span>
+        </div>
         <button
           disabled={loading}
-          className="rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white shadow-sm disabled:opacity-60"
+          className="btn w-full"
         >
-          {loading ? "Redirecting…" : `Pay $${deposit} Deposit`}
+          {loading ? "Redirecting to Stripe…" : `Pay $${deposit} Deposit Now`}
         </button>
-        <p className="text-sm text-gray-600">
-          You’ll be redirected to Stripe checkout.
+        <p className="text-center text-xs text-muted">
+          Secure payment processing via Stripe
         </p>
       </div>
 
-      {support && (support.phone || support.email) ? (
-        <p className="text-xs text-gray-500">
-          Need help? {support.phone ? `Call ${support.phone}` : null}
-          {support.phone && support.email ? " • " : null}
-          {support.email ? support.email : null}
-        </p>
-      ) : null}
+      {support && (support.phone || support.email) && (
+        <div className="rounded-lg border border-gold/30 bg-gold/5 p-4 text-center">
+          <p className="mb-1 text-sm font-medium text-gold">Need Assistance?</p>
+          <p className="text-xs text-secondary">
+            {support.phone && (
+              <>
+                Call <a href={`tel:${support.phone}`} className="text-gold hover:underline">{support.phone}</a>
+              </>
+            )}
+            {support.phone && support.email && <span className="mx-1">•</span>}
+            {support.email && (
+              <>
+                Email <a href={`mailto:${support.email}`} className="text-gold hover:underline">{support.email}</a>
+              </>
+            )}
+          </p>
+        </div>
+      )}
     </form>
   );
 }

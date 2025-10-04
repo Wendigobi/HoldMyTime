@@ -2,6 +2,8 @@
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import Link from 'next/link';
+import { SITE_URL } from '../../lib/constants';
+import type { Business } from '../../lib/types';
 
 export const runtime = 'nodejs';
 
@@ -24,11 +26,15 @@ export default async function Dashboard() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return (
-      <main className="min-h-screen px-6 py-12">
-        <div className="mx-auto max-w-2xl">
-          <p className="text-amber-200">
-            You’re signed out. <Link href="/login" className="underline">Sign in</Link>.
+      <main className="centered-layout">
+        <div className="card max-w-md text-center">
+          <h2 className="mb-4 text-2xl font-bold text-gold">Authentication Required</h2>
+          <p className="mb-6 text-secondary">
+            You need to be signed in to access your dashboard.
           </p>
+          <Link href="/login" className="btn inline-block">
+            Sign In
+          </Link>
         </div>
       </main>
     );
@@ -42,47 +48,76 @@ export default async function Dashboard() {
 
   return (
     <main className="min-h-screen px-6 py-12">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <header className="flex items-center justify-between">
-          <h1 className="text-3xl font-semibold text-amber-300">Dashboard</h1>
-          <Link
-            href="/"
-            className="rounded-md border border-amber-500/40 bg-black px-3 py-1.5 text-amber-300 hover:bg-amber-500/10"
-          >
-            Create new booking page
+      <div className="container max-w-6xl">
+        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="mb-2 text-4xl font-bold">Dashboard</h1>
+            <p className="text-secondary">Manage your booking pages</p>
+          </div>
+          <Link href="/" className="btn-outline inline-block">
+            + Create New Page
           </Link>
         </header>
 
-        {error && <p className="text-red-400">{error.message}</p>}
+        {error && (
+          <div className="mb-6 rounded-lg border-2 border-red-600 bg-red-950/30 p-4">
+            <p className="text-red-400">{error.message}</p>
+          </div>
+        )}
 
         {!businesses?.length ? (
-          <p className="text-amber-200/80">
-            No booking pages yet. Click <span className="font-medium">“Create new booking page”</span> to start.
-          </p>
+          <div className="card-gold text-center">
+            <svg className="mx-auto mb-4 h-16 w-16 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <h2 className="mb-2 text-2xl font-bold text-gold">No Booking Pages Yet</h2>
+            <p className="mb-6 text-secondary">
+              Create your first booking page to start accepting appointments with deposits.
+            </p>
+            <Link href="/" className="btn inline-block">
+              Create First Page
+            </Link>
+          </div>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2">
-            {businesses.map((b: any) => (
-              <li key={b.id} className="rounded-2xl border border-amber-500/25 bg-black/40 p-4 shadow-[0_8px_40px_rgba(255,200,0,0.08)] backdrop-blur">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-lg font-semibold text-amber-100">{b.business_name}</div>
-                    <div className="text-sm text-amber-200/70">
-                      Deposit ${(b.deposit_cents / 100).toFixed(0)} · {b.contact_email} · {b.phone}
-                    </div>
-                    <div className="mt-1 text-xs text-amber-300/80">
-                      Public: {process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.holdmytime.io'}/business/{b.slug}
+          <div className="grid gap-6 md:grid-cols-2">
+            {businesses.map((b: Business) => (
+              <div key={b.id} className="card group">
+                <div className="mb-4 flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="mb-2 text-xl font-bold text-gold">{b.business_name}</h3>
+                    <div className="space-y-1 text-sm text-secondary">
+                      <p>
+                        <span className="text-muted">Deposit:</span> ${(b.deposit_cents / 100).toFixed(0)}
+                      </p>
+                      <p>
+                        <span className="text-muted">Email:</span> {b.contact_email}
+                      </p>
+                      {b.phone && (
+                        <p>
+                          <span className="text-muted">Phone:</span> {b.phone}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <Link href={`/business/${b.slug}`} className="text-amber-300 hover:underline">
-                      View
-                    </Link>
-                    {/* In the future add an Edit page */}
-                  </div>
+                  <Link href={`/business/${b.slug}`} className="btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                    View Page
+                  </Link>
                 </div>
-              </li>
+
+                <div className="mt-4 rounded-lg bg-black/50 p-3">
+                  <p className="text-xs text-muted">Public URL:</p>
+                  <a
+                    href={`${SITE_URL}/business/${b.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block truncate text-sm text-gold hover:text-gold-light"
+                  >
+                    {SITE_URL}/business/{b.slug}
+                  </a>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </main>
