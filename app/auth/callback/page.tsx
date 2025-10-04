@@ -1,19 +1,24 @@
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+interface SearchParams {
+  code?: string;
+  error_description?: string;
+}
+
 export default async function AuthCallbackPage({
   searchParams,
 }: {
-  searchParams: { code?: string; error_description?: string };
+  searchParams: Promise<SearchParams>;
 }) {
-  const cookieStore = cookies();
-  const code = searchParams.code;
-  const error = searchParams.error_description;
+  const params = await searchParams;
+  const cookieStore = await cookies();
+  const code = params.code;
+  const error = params.error_description;
 
   if (error) {
     redirect(`/login?error=${encodeURIComponent(error)}`);
@@ -47,6 +52,5 @@ export default async function AuthCallbackPage({
     redirect('/dashboard');
   }
 
-  // No code, just redirect to dashboard
   redirect('/dashboard');
 }
