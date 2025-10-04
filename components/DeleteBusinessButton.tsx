@@ -39,9 +39,11 @@ export default function DeleteBusinessButton({
       const result = await res.json();
       console.log('Delete successful:', result);
       
-      // Successfully deleted - use Next.js router to force refresh
-      router.push('/dashboard?deleted=' + Date.now());
+      // Successfully deleted - navigate to dashboard and force refresh
+      router.push('/dashboard');
       router.refresh();
+      // Also reload to ensure fresh data
+      setTimeout(() => window.location.href = '/dashboard', 100);
     } catch (err) {
       console.error('Network error:', err);
       const errorMsg = err instanceof Error ? err.message : 'Unknown error';
