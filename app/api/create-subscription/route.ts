@@ -62,7 +62,7 @@ export async function POST(req: Request) {
         user_id: user.id,
       },
       subscription_data: {
-        trial_period_days: 14,
+        trial_period_days: 3,
         metadata: {
           user_id: user.id,
         },

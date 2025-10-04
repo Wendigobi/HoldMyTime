@@ -16,18 +16,26 @@ export default function DeleteBusinessButton({
 
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/businesses/${businessId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/businesses/${businessId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        alert(data.error ?? 'Failed to delete business');
+        const errorMessage = data.error || `Failed to delete business (Status: ${res.status})`;
+        alert(errorMessage);
         return;
       }
 
-      // Soft toast here if you have a toaster; otherwise:
+      // Successfully deleted
+      alert(`"${businessName}" has been deleted successfully.`);
       router.refresh();
     } catch (err) {
-      alert('Network error deleting business');
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+      alert(`Network error deleting business: ${errorMsg}`);
     } finally {
       setIsDeleting(false);
     }

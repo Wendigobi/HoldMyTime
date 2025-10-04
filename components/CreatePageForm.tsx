@@ -34,10 +34,49 @@ export default function CreatePageForm() {
   const [slug, setSlug] = useState('');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean | null>(null);
+  const [checkingSubscription, setCheckingSubscription] = useState(true);
 
   useEffect(() => {
     setSlug(slugify(businessName));
   }, [businessName]);
+
+  useEffect(() => {
+    async function checkSubscription() {
+      try {
+        const { data: userRes, error: userErr } = await supabase.auth.getUser();
+        if (userErr) throw userErr;
+        const user = userRes.user;
+        if (!user) {
+          setHasActiveSubscription(false);
+          setCheckingSubscription(false);
+          return;
+        }
+
+        // Check user's subscription status
+        const { data: userData, error: dbErr } = await supabase
+          .from('users')
+          .select('subscription_status')
+          .eq('id', user.id)
+          .single();
+
+        if (dbErr) {
+          console.error('Error checking subscription:', dbErr);
+          setHasActiveSubscription(false);
+        } else {
+          const hasAccess = userData?.subscription_status === 'active' || userData?.subscription_status === 'trial';
+          setHasActiveSubscription(hasAccess);
+        }
+      } catch (e) {
+        console.error('Error checking subscription:', e);
+        setHasActiveSubscription(false);
+      } finally {
+        setCheckingSubscription(false);
+      }
+    }
+
+    checkSubscription();
+  }, [supabase]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,6 +89,13 @@ export default function CreatePageForm() {
       const user = userRes.user;
       if (!user) {
         setErr('Please sign in first.');
+        setSaving(false);
+        return;
+      }
+
+      // Check subscription status before creating page
+      if (!hasActiveSubscription) {
+        setErr('You need an active subscription to create a booking page. Please subscribe to continue.');
         setSaving(false);
         return;
       }
@@ -86,6 +132,35 @@ export default function CreatePageForm() {
     } finally {
       setSaving(false);
     }
+  }
+
+  // Show loading state while checking subscription
+  if (checkingSubscription) {
+    return (
+      <div className="card-gold max-w-3xl mx-auto">
+        <div className="text-center py-8">
+          <div className="spinner mx-auto mb-4"></div>
+          <p className="text-secondary">Checking subscription status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show subscription required message if no active subscription
+  if (!hasActiveSubscription) {
+    return (
+      <div className="card-gold max-w-3xl mx-auto">
+        <h3 className="mb-6 text-2xl font-bold text-gold">Subscription Required</h3>
+        <p className="mb-6 text-secondary">
+          You need an active subscription to create booking pages. Start your 3-day free trial to get started!
+        </p>
+        <div className="flex gap-4">
+          <a href="/dashboard" className="btn">
+            Go to Dashboard
+          </a>
+        </div>
+      </div>
+    );
   }
 
   return (

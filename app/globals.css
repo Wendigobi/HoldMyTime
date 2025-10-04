@@ -41,6 +41,12 @@ body {
   padding: 0 1.5rem;
 }
 
+@media (max-width: 640px) {
+  .container {
+    padding: 0 1rem;
+  }
+}
+
 .card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -250,9 +256,158 @@ h3 { font-size: 1.75rem; }
   font-size: 0.875rem;
 }
 
+/* Tablet breakpoint */
 @media (max-width: 768px) {
   h1 { font-size: 2.5rem; }
   h2 { font-size: 2rem; }
-  .card { padding: 1.5rem; }
-  .btn { padding: 0.75rem 1.5rem; font-size: 0.9rem; }
+  h3 { font-size: 1.5rem; }
+
+  .card {
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+
+  .card-gold {
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+
+  .btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .btn-outline {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Mobile breakpoint */
+@media (max-width: 640px) {
+  h1 {
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  .card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .card-gold {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+    width: 100%;
+    text-align: center;
+  }
+
+  .btn-outline {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+    width: 100%;
+    text-align: center;
+  }
+
+  .btn-danger {
+    padding: 0.625rem 1rem;
+    font-size: 0.8125rem;
+  }
+
+  .btn-small {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8125rem;
+  }
+
+  .field {
+    padding: 0.75rem 0.875rem;
+    font-size: 0.9375rem;
+  }
+
+  .centered-layout {
+    padding: 1.5rem 1rem;
+  }
+}
+
+/* Extra small mobile breakpoint */
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  .card,
+  .card-gold {
+    padding: 0.875rem;
+  }
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 640px) {
+  /* Improve touch targets */
+  button,
+  a.btn,
+  a.btn-outline {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Better spacing for form fields on mobile */
+  .field {
+    min-height: 44px;
+  }
+
+  /* Stack flex containers on mobile */
+  .flex.gap-3,
+  .flex.gap-4 {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  /* Ensure proper text sizing for readability */
+  body {
+    font-size: 16px; /* Prevents zoom on input focus in iOS */
+  }
+
+  /* Better grid layouts on mobile */
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Improve modal/card max-widths on mobile */
+  .max-w-3xl,
+  .max-w-md,
+  .max-w-6xl {
+    max-width: 100%;
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 896px) and (orientation: landscape) {
+  .centered-layout {
+    padding: 1rem;
+    min-height: auto;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
 }

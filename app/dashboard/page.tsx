@@ -83,7 +83,7 @@ export default async function Dashboard() {
         {!hasActiveAccess && (
           <div className="mb-8 card-gold animate-fadeIn">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2 text-gold">Start Your 14-Day Free Trial</h2>
+              <h2 className="text-2xl font-bold mb-2 text-gold">Start Your 3-Day Free Trial</h2>
               <p className="text-secondary mb-6">
                 Get unlimited booking pages and secure deposit collection for only $15/month. No credit card required for trial.
               </p>
