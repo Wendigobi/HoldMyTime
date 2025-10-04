@@ -2,28 +2,43 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createBrowserClient, type Session } from '@supabase/ssr';
 
 type Props = {
   signedOut: React.ReactNode;
   signedIn: React.ReactNode;
 };
 
-/**
- * Extremely small “gate”: checks a session token cookie flag.
- * Replace this later with your real Supabase auth check.
- */
 export default function AuthGate({ signedOut, signedIn }: Props) {
-  const [authed, setAuthed] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   useEffect(() => {
-    // naive client-side check for a cookie flag
-    const hasFlag =
-      typeof document !== 'undefined' &&
-      document.cookie.split('; ').some((c) => c.startsWith('hmtauthed=1'));
+    let mounted = true;
 
-    setAuthed(hasFlag);
-  }, []);
+    async function load() {
+      const { data } = await supabase.auth.getSession();
+      if (!mounted) return;
+      setSession(data.session ?? null);
+      setLoading(false);
+    }
 
-  if (authed === null) return null; // or a spinner
-  return <>{authed ? signedIn : signedOut}</>;
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      setSession(sess ?? null);
+    });
+
+    load();
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (loading) return null; // could render a spinner
+  return <>{session ? signedIn : signedOut}</>;
 }
