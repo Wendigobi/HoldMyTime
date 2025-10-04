@@ -4,10 +4,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
+import type { Route } from 'next';
 
 export default function AuthCallback() {
   const router = useRouter();
-  const params = useSearchParams(); // may be seen as nullable in strict TS
+  const params = useSearchParams();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,13 +34,18 @@ export default function AuthCallback() {
         }
       }
 
-      const next = params?.get('next') || '/dashboard';
-      router.replace(next);
+      // Only allow internal paths starting with "/" and default to /dashboard
+      const candidate = params?.get('next') ?? '/dashboard';
+      const safeNext =
+        typeof candidate === 'string' && candidate.startsWith('/') ? candidate : '/dashboard';
+
+      router.replace(safeNext as Route);
       router.refresh();
     }
 
     run();
-  }, [params, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <main className="grid min-h-screen place-items-center px-6 py-12">
