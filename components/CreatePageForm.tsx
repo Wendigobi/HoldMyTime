@@ -226,7 +226,7 @@ export default function CreatePageForm() {
             </div>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-secondary">Page URL Slug</label>
+            <label className="mb-2 block text-sm font-medium text-secondary">Custom URL</label>
             <input
               className="field"
               value={slug}
@@ -234,7 +234,7 @@ export default function CreatePageForm() {
               required
             />
             <p className="mt-2 text-xs text-muted">
-              Your public page: <span className="text-gold">{SITE_URL}/business/{slug || '<slug>'}</span>
+              Your booking page: <span className="text-gold">{SITE_URL}/business/{slug || 'your-url'}</span>
             </p>
           </div>
         </div>

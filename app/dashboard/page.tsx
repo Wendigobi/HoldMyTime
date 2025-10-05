@@ -79,6 +79,9 @@ export default async function Dashboard() {
             <Link href="/" className="btn-outline inline-block">
               + Create New Page
             </Link>
+            <Link href="/settings" className="btn-outline inline-block">
+              Settings
+            </Link>
             <LogoutButton />
           </div>
         </header>
