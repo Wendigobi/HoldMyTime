@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import getSupabaseAdmin from '../../../lib/supabaseAdmin';
+import { PLATFORM_FEE_CENTS } from '../../../lib/constants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -93,6 +94,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 });
     }
 
+    // Check if business has Stripe Connect account set up
+    if (!business.stripe_account_id) {
+      return NextResponse.json(
+        { error: 'This business has not set up payment processing yet. Please contact the business owner.' },
+        { status: 400 }
+      );
+    }
+
+    // Check if Stripe Connect account is active
+    if (business.stripe_account_status !== 'active') {
+      return NextResponse.json(
+        { error: 'This business is not yet able to accept payments. Please contact the business owner.' },
+        { status: 400 }
+      );
+    }
+
     // Create booking record
     const { data: booking, error: bookingErr } = await supabase
       .from('bookings')
@@ -117,11 +134,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: bookingErr.message }, { status: 500 });
     }
 
-    // Create Stripe checkout session
+    // Create Stripe checkout session with Connect account
     const stripe = (await import('../../../lib/stripe')).default;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.holdmytime.io';
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig = {
       payment_method_types: ['card'],
       line_items: [
         {
@@ -136,14 +153,28 @@ export async function POST(req: Request) {
           quantity: 1,
         },
       ],
-      mode: 'payment',
+      mode: 'payment' as const,
       success_url: `${siteUrl}/success?session_id={CHECKOUT_SESSION_ID}&booking_id=${booking.id}`,
       cancel_url: `${siteUrl}/canceled?booking_id=${booking.id}`,
+      payment_intent_data: {
+        application_fee_amount: PLATFORM_FEE_CENTS,
+        metadata: {
+          booking_id: booking.id,
+          business_id: business_id,
+          platform_fee_cents: PLATFORM_FEE_CENTS.toString(),
+        },
+      },
       metadata: {
         booking_id: booking.id,
         business_id: business_id,
+        platform_fee_cents: PLATFORM_FEE_CENTS.toString(),
       },
-    });
+    };
+
+    const session = await stripe.checkout.sessions.create(
+      sessionConfig,
+      { stripeAccount: business.stripe_account_id }
+    );
 
     return NextResponse.json({ ok: true, url: session.url });
   } catch (err: any) {
