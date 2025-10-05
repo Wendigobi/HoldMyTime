@@ -5,11 +5,24 @@ import { createServerClient } from '@supabase/ssr';
 
 export const runtime = 'nodejs';
 
+// Add GET for debugging
+export async function GET(
+  _req: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  const { id } = await context.params;
+  return NextResponse.json({ 
+    message: 'DELETE route exists',
+    id,
+    version: 'v3-with-logging-and-cascade-delete',
+    timestamp: new Date().toISOString()
+  });
+}
+
 export async function DELETE(
   _req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  // Await params for Next.js 15+ compatibility
   const { id } = await context.params;
   
   console.log('[DELETE] Starting delete for business ID:', id);
