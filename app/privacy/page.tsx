@@ -116,8 +116,8 @@ export default function PrivacyPage() {
               <h2 className="text-2xl font-semibold text-gold mb-3">10. Contact Us</h2>
               <p>
                 If you have questions about this privacy policy, please contact us at:{' '}
-                <a href="mailto:privacy@holdmytime.io" className="text-gold hover:underline">
-                  privacy@holdmytime.io
+                <a href="mailto:support@holdmytime.io" className="text-gold hover:underline">
+                  support@holdmytime.io
                 </a>
               </p>
             </section>
