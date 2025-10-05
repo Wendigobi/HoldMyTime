@@ -45,7 +45,7 @@ export async function POST(req: Request) {
               subscription_id: subscriptionId,
               stripe_customer_id: customerId,
               trial_ends_at: trialEndsAt.toISOString(),
-              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              current_period_end: subscription.current_period_end ? new Date((subscription.current_period_end as any) * 1000).toISOString() : null,
             })
             .eq('id', userId);
         }
@@ -128,7 +128,7 @@ export async function POST(req: Request) {
           .update({
             subscription_status: status,
             subscription_id: subscription.id,
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            current_period_end: subscription.current_period_end ? new Date((subscription.current_period_end as any) * 1000).toISOString() : null,
           })
           .eq('stripe_customer_id', customerId);
       }
