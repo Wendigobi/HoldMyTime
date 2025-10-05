@@ -7,6 +7,10 @@ export const DEPOSIT_TIERS_CENTS = [2500, 5000, 7500, 10000] as const;
 // Currency conversion
 export const CENTS_PER_DOLLAR = 100;
 
+// Platform fee per booking (in cents)
+// This is the amount YOU earn per customer booking
+export const PLATFORM_FEE_CENTS = 200; // $2.00
+
 // Default site URL (fallback if env var not set)
 export const DEFAULT_SITE_URL = process.env.NODE_ENV === 'production'
   ? 'https://www.holdmytime.io'

@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import getSupabaseAdmin from '../../../lib/supabaseAdmin';
 import stripe from '../../../lib/stripe';
+import { PLATFORM_FEE_CENTS } from '../../../lib/constants';
 
 export const runtime = 'nodejs';
 
@@ -96,7 +97,7 @@ export async function POST(req: Request) {
       'https://www.holdmytime.io';
 
     // Platform fee: $2.00 = 200 cents
-    const platformFeeCents = 200;
+    const platformFeeCents = PLATFORM_FEE_CENTS;
 
     const session = await stripe.checkout.sessions.create(
       {
