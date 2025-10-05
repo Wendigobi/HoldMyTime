@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
         if (userId && subscriptionId && customerId) {
           // Retrieve the full subscription object to get current_period_end
-          const subscriptionData = await stripe.subscriptions.retrieve(subscriptionId as string);
+          const subscriptionData: any = await stripe.subscriptions.retrieve(subscriptionId as string);
 
           // Calculate trial end date (3 days from now)
           const trialEndsAt = new Date();
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
               subscription_id: subscriptionId,
               stripe_customer_id: customerId,
               trial_ends_at: trialEndsAt.toISOString(),
-              current_period_end: subscriptionData.current_period_end ? new Date((subscriptionData.current_period_end as any) * 1000).toISOString() : null,
+              current_period_end: subscriptionData.current_period_end ? new Date(subscriptionData.current_period_end * 1000).toISOString() : null,
             })
             .eq('id', userId);
         }
@@ -128,7 +128,7 @@ export async function POST(req: Request) {
           .update({
             subscription_status: status,
             subscription_id: subscription.id,
-            current_period_end: subscriptionData.current_period_end ? new Date((subscriptionData.current_period_end as any) * 1000).toISOString() : null,
+            current_period_end: subscriptionData.current_period_end ? new Date(subscriptionData.current_period_end * 1000).toISOString() : null,
           })
           .eq('stripe_customer_id', customerId);
       }
