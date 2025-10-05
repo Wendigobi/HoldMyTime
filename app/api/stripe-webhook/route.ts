@@ -19,24 +19,55 @@ export async function POST(req: Request) {
 
     const supabase = getSupabaseAdmin();
 
-    // Handle checkout completion for bookings/deposits
+    // Handle checkout completion for subscriptions and bookings/deposits
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as any;
-      const businessId = session?.metadata?.business_id;
-      const platformFeeCents = parseInt(session?.metadata?.platform_fee_cents || '0', 10);
 
-      if (businessId) {
-        await supabase
-          .from('businesses')
-          .update({ status: 'paid', checkout_session_id: session.id })
-          .eq('id', businessId);
+      // Check if this is a subscription checkout
+      if (session.mode === 'subscription') {
+        const userId = session?.metadata?.user_id;
+        const subscriptionId = session.subscription;
+        const customerId = session.customer;
 
-        // If there's a booking associated, update it with platform fee
-        if (session.metadata?.booking_id && platformFeeCents > 0) {
+        if (userId && subscriptionId && customerId) {
+          // Retrieve the full subscription object to get current_period_end
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId as string);
+
+          // Calculate trial end date (3 days from now)
+          const trialEndsAt = new Date();
+          trialEndsAt.setDate(trialEndsAt.getDate() + 3);
+
+          // Update user with subscription information
           await supabase
-            .from('bookings')
-            .update({ platform_fee_cents: platformFeeCents })
-            .eq('id', session.metadata.booking_id);
+            .from('users')
+            .update({
+              subscription_status: 'trial',
+              subscription_id: subscriptionId,
+              stripe_customer_id: customerId,
+              trial_ends_at: trialEndsAt.toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            })
+            .eq('id', userId);
+        }
+      }
+      // Handle booking/business payment checkout
+      else if (session.mode === 'payment') {
+        const businessId = session?.metadata?.business_id;
+        const platformFeeCents = parseInt(session?.metadata?.platform_fee_cents || '0', 10);
+
+        if (businessId) {
+          await supabase
+            .from('businesses')
+            .update({ status: 'paid', checkout_session_id: session.id })
+            .eq('id', businessId);
+
+          // If there's a booking associated, update it with platform fee
+          if (session.metadata?.booking_id && platformFeeCents > 0) {
+            await supabase
+              .from('bookings')
+              .update({ platform_fee_cents: platformFeeCents })
+              .eq('id', session.metadata.booking_id);
+          }
         }
       }
     }
