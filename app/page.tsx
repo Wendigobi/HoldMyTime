@@ -101,6 +101,12 @@ export default function HomePage() {
                   Start Free Trial — $15/month after
                 </Link>
               </div>
+
+              <footer className="mt-16 text-center text-sm text-muted">
+                <Link href="/privacy" className="hover:text-gold transition-colors">
+                  Privacy Policy
+                </Link>
+              </footer>
             </div>
           </div>
         }
