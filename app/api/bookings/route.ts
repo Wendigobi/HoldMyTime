@@ -139,7 +139,7 @@ export async function POST(req: Request) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.holdmytime.io';
 
     const sessionConfig = {
-      payment_method_types: ['card'] as const,
+      payment_method_types: ['card'] as any,
       line_items: [
         {
           price_data: {
