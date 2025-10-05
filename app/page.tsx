@@ -10,24 +10,24 @@ export default function HomePage() {
           <div className="centered-layout">
             <div className="container max-w-6xl">
               <div className="text-center mb-16 animate-fadeIn">
-                <h1 className="text-6xl md:text-7xl font-extrabold mb-6">
+                <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold mb-6 px-4">
                   HoldMyTime
                 </h1>
-                <p className="text-2xl md:text-3xl text-secondary mb-8 max-w-3xl mx-auto">
+                <p className="text-xl sm:text-2xl md:text-3xl text-secondary mb-8 max-w-3xl mx-auto px-4">
                   Never lose money to no-shows again
                 </p>
-                <p className="text-xl text-muted max-w-3xl mx-auto mb-8 leading-relaxed">
+                <p className="text-base sm:text-xl text-muted max-w-3xl mx-auto mb-8 leading-relaxed px-4">
                   The modern booking solution for salons, barbershops, tattoo artists, plumbers, contractors, freelancers, and service professionals who value their time.
                 </p>
-                <div className="bg-gold/10 border border-gold/30 rounded-2xl p-6 max-w-2xl mx-auto mb-12">
-                  <p className="text-2xl font-bold text-gold mb-2">Only $15/month</p>
-                  <p className="text-secondary">Unlimited booking pages • Secure deposits • Professional dashboard</p>
+                <div className="bg-gold/10 border border-gold/30 rounded-2xl p-4 sm:p-6 max-w-2xl mx-4 sm:mx-auto mb-12">
+                  <p className="text-xl sm:text-2xl font-bold text-gold mb-2">Only $15/month</p>
+                  <p className="text-sm sm:text-base text-secondary">Unlimited booking pages • Secure deposits • Professional dashboard</p>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                  <Link href="/login" className="btn text-lg px-8 py-4">
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center px-4">
+                  <Link href="/login" className="btn text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto">
                     Start Your Free Trial
                   </Link>
-                  <Link href="/login" className="btn-outline text-lg px-8 py-4">
+                  <Link href="/login" className="btn-outline text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto">
                     Sign In
                   </Link>
                 </div>
