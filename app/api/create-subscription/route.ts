@@ -35,6 +35,14 @@ export async function POST(req: Request) {
   }
 
   try {
+    // Use STRIPE_PRICE_ID from environment variables
+    // This should be set to your Stripe Price ID (e.g., price_xxxxxxxxxxxxx)
+    const priceId = process.env.STRIPE_PRICE_ID;
+    
+    if (!priceId) {
+      throw new Error('STRIPE_PRICE_ID environment variable is not set. Please create a product in Stripe dashboard and add the Price ID to your environment variables.');
+    }
+
     // Create Stripe Checkout session for subscription
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -42,17 +50,7 @@ export async function POST(req: Request) {
       customer_email: user.email,
       line_items: [
         {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: 'HoldMyTime Pro',
-              description: 'Unlimited booking pages with secure deposit collection',
-            },
-            unit_amount: 1500, // $15.00
-            recurring: {
-              interval: 'month',
-            },
-          },
+          price: priceId, // Use the Price ID from Stripe dashboard
           quantity: 1,
         },
       ],
