@@ -13,6 +13,12 @@ export interface Business {
   status: 'pending' | 'paid' | 'active' | 'inactive';
   checkout_session_id?: string;
   stripe_pay_link_url?: string;
+  // Stripe Connect fields
+  stripe_account_id?: string;
+  stripe_account_status?: 'not_connected' | 'pending' | 'active' | 'restricted';
+  stripe_onboarding_complete?: boolean;
+  stripe_charges_enabled?: boolean;
+  stripe_payouts_enabled?: boolean;
 }
 
 export interface Booking {
@@ -29,6 +35,8 @@ export interface Booking {
   deposit_paid: boolean;
   deposit_amount_cents: number;
   stripe_payment_intent_id?: string;
+  stripe_transfer_id?: string; // Track transfers to connected accounts
+  platform_fee_cents?: number; // Track platform fee taken
   status: 'pending' | 'confirmed' | 'canceled' | 'completed';
   notes?: string;
 }

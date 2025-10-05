@@ -7,6 +7,7 @@ import type { Business } from '../../lib/types';
 import DeleteBusinessButton from '../../components/DeleteBusinessButton';
 import LogoutButton from '../../components/LogoutButton';
 import SubscriptionButton from '../../components/SubscriptionButton';
+import ConnectStripeButton from '../../components/ConnectStripeButton';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -152,6 +153,14 @@ export default async function Dashboard() {
                   >
                     {SITE_URL}/business/{b.slug}
                   </a>
+                </div>
+
+                <div className="mt-4">
+                  <ConnectStripeButton
+                    businessId={b.id}
+                    stripeAccountId={b.stripe_account_id}
+                    stripeAccountStatus={b.stripe_account_status}
+                  />
                 </div>
               </div>
             ))}
