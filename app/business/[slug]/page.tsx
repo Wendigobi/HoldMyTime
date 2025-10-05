@@ -51,7 +51,20 @@ export default async function PublicBusinessPage({ params }: Props) {
   }
 
   const businessData = business as Business;
-  const deposit = (businessData.deposit_cents ?? 0) / 100;
+
+  // Calculate deposit based on type
+  let deposit: number;
+  let servicePrice: number | null = null;
+
+  if (businessData.service_price_cents) {
+    servicePrice = businessData.service_price_cents / 100;
+  }
+
+  if (businessData.deposit_type === 'percentage' && businessData.deposit_percentage && servicePrice) {
+    deposit = servicePrice * (businessData.deposit_percentage / 100);
+  } else {
+    deposit = (businessData.deposit_cents ?? 0) / 100;
+  }
 
   return (
     <main className="min-h-screen px-6 py-12">
@@ -63,9 +76,26 @@ export default async function PublicBusinessPage({ params }: Props) {
             </svg>
           </div>
           <h1 className="mb-3 text-4xl font-bold">{businessData.business_name}</h1>
-          <p className="mb-2 text-lg text-secondary">
-            Secure your appointment with a <span className="font-bold text-gold">${deposit.toFixed(0)}</span> deposit
-          </p>
+          {businessData.service_name && (
+            <p className="mb-2 text-xl text-gold">{businessData.service_name}</p>
+          )}
+          {servicePrice ? (
+            <div className="mb-2">
+              <p className="text-lg text-secondary">
+                Service Price: <span className="font-bold text-gold">${servicePrice.toFixed(2)}</span>
+              </p>
+              <p className="text-lg text-secondary">
+                Required Deposit: <span className="font-bold text-gold">${deposit.toFixed(2)}</span>
+                {businessData.deposit_type === 'percentage' && businessData.deposit_percentage && (
+                  <span className="text-sm text-muted"> ({businessData.deposit_percentage}%)</span>
+                )}
+              </p>
+            </div>
+          ) : (
+            <p className="mb-2 text-lg text-secondary">
+              Secure your appointment with a <span className="font-bold text-gold">${deposit.toFixed(0)}</span> deposit
+            </p>
+          )}
           <p className="text-sm text-muted">
             Book your time slot and we'll confirm your appointment
           </p>
@@ -79,6 +109,8 @@ export default async function PublicBusinessPage({ params }: Props) {
 
           <BookingForm
             businessId={businessData.id}
+            serviceName={businessData.service_name}
+            servicePrice={servicePrice}
             deposit={deposit}
             support={{
               phone: businessData.phone,

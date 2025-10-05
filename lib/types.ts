@@ -9,7 +9,13 @@ export interface Business {
   slug: string;
   contact_email: string;
   phone?: string;
-  deposit_cents: number;
+  // Service pricing
+  service_name?: string;
+  service_price_cents?: number;
+  // Deposit configuration
+  deposit_type: 'percentage' | 'fixed';
+  deposit_percentage?: number; // 25, 50, 75, 100
+  deposit_cents: number; // For fixed amounts or calculated minimum
   status: 'pending' | 'paid' | 'active' | 'inactive';
   checkout_session_id?: string;
   stripe_pay_link_url?: string;
@@ -33,7 +39,12 @@ export interface Booking {
   booking_date: string;
   booking_time: string;
   deposit_paid: boolean;
-  deposit_amount_cents: number;
+  // Payment amounts
+  service_price_cents: number; // Total service price
+  deposit_amount_cents: number; // Required minimum deposit
+  amount_paid_cents: number; // What customer actually paid (deposit to full price)
+  tip_cents?: number; // Optional tip added
+  balance_remaining_cents: number; // service_price - amount_paid (not including tip)
   stripe_payment_intent_id?: string;
   stripe_transfer_id?: string; // Track transfers to connected accounts
   platform_fee_cents?: number; // Track platform fee taken

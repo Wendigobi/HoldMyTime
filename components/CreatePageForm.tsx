@@ -30,6 +30,10 @@ export default function CreatePageForm() {
   const [businessName, setBusinessName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [serviceName, setServiceName] = useState('');
+  const [servicePrice, setServicePrice] = useState('');
+  const [depositType, setDepositType] = useState<'percentage' | 'fixed'>('percentage');
+  const [depositPercentage, setDepositPercentage] = useState(50);
   const [deposit, setDeposit] = useState<DepositTier>(50);
   const [slug, setSlug] = useState('');
   const [saving, setSaving] = useState(false);
@@ -100,14 +104,40 @@ export default function CreatePageForm() {
         return;
       }
 
+      // Calculate deposit amount based on type
+      let depositCents: number;
+      let servicePriceCents: number | null = null;
+
+      if (depositType === 'percentage') {
+        // Must have service price for percentage
+        if (!servicePrice || parseFloat(servicePrice) <= 0) {
+          setErr('Service price is required when using percentage deposit.');
+          setSaving(false);
+          return;
+        }
+        servicePriceCents = Math.round(parseFloat(servicePrice) * 100);
+        depositCents = Math.round(servicePriceCents * (depositPercentage / 100));
+      } else {
+        // Fixed deposit
+        depositCents = deposit * 100;
+        // Service price is optional for fixed deposit
+        if (servicePrice && parseFloat(servicePrice) > 0) {
+          servicePriceCents = Math.round(parseFloat(servicePrice) * 100);
+        }
+      }
+
       // Try to insert record
-      const insert = {
+      const insert: any = {
         owner_id: user.id,
         business_name: businessName,
         slug,
         contact_email: contactEmail,
         phone,
-        deposit_cents: deposit * 100,
+        service_name: serviceName || null,
+        service_price_cents: servicePriceCents,
+        deposit_type: depositType,
+        deposit_percentage: depositType === 'percentage' ? depositPercentage : null,
+        deposit_cents: depositCents,
       };
 
       const { error: dbErr } = await supabase.from('businesses').insert(insert);
@@ -204,27 +234,126 @@ export default function CreatePageForm() {
           </div>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-secondary">Deposit Amount</label>
-            <div className="flex flex-wrap gap-2">
-              {DEPOSIT_TIERS.map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => setDeposit(d)}
-                  className={
-                    deposit === d
-                      ? 'btn'
-                      : 'btn-outline'
-                  }
-                  style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
-                >
-                  ${d}
-                </button>
-              ))}
+        {/* Service Details */}
+        <div className="border-t border-gold/30 pt-6">
+          <h4 className="text-lg font-semibold text-gold mb-4">Service Details</h4>
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-secondary">
+                Service Name <span className="text-xs text-muted">(Optional)</span>
+              </label>
+              <input
+                className="field"
+                placeholder="e.g., Men's Haircut"
+                value={serviceName}
+                onChange={(e) => setServiceName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-secondary">
+                Service Price {depositType === 'percentage' && <span className="text-red-400">*</span>}
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="field pl-8"
+                  placeholder="80.00"
+                  value={servicePrice}
+                  onChange={(e) => setServicePrice(e.target.value)}
+                  required={depositType === 'percentage'}
+                />
+              </div>
+              <p className="mt-1 text-xs text-muted">Total cost of your service</p>
             </div>
           </div>
+        </div>
+
+        {/* Deposit Configuration */}
+        <div className="border-t border-gold/30 pt-6">
+          <h4 className="text-lg font-semibold text-gold mb-4">Deposit Requirement</h4>
+
+          <div className="mb-4">
+            <label className="mb-2 block text-sm font-medium text-secondary">Deposit Type</label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="depositType"
+                  value="percentage"
+                  checked={depositType === 'percentage'}
+                  onChange={(e) => setDepositType(e.target.value as 'percentage')}
+                  className="w-4 h-4 text-gold"
+                />
+                <span className="text-secondary">Percentage of service price</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="depositType"
+                  value="fixed"
+                  checked={depositType === 'fixed'}
+                  onChange={(e) => setDepositType(e.target.value as 'fixed')}
+                  className="w-4 h-4 text-gold"
+                />
+                <span className="text-secondary">Fixed amount</span>
+              </label>
+            </div>
+          </div>
+
+          {depositType === 'percentage' ? (
+            <div>
+              <label className="mb-2 block text-sm font-medium text-secondary">Deposit Percentage</label>
+              <div className="flex flex-wrap gap-2">
+                {[25, 50, 75, 100].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => setDepositPercentage(pct)}
+                    className={depositPercentage === pct ? 'btn' : 'btn-outline'}
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+                  >
+                    {pct}%
+                    {servicePrice && parseFloat(servicePrice) > 0 && (
+                      <span className="ml-1 text-xs">
+                        (${(parseFloat(servicePrice) * (pct / 100)).toFixed(0)})
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              {servicePrice && parseFloat(servicePrice) > 0 && (
+                <p className="mt-2 text-sm text-gold">
+                  Required deposit: ${(parseFloat(servicePrice) * (depositPercentage / 100)).toFixed(2)}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div>
+              <label className="mb-2 block text-sm font-medium text-secondary">Deposit Amount</label>
+              <div className="flex flex-wrap gap-2">
+                {DEPOSIT_TIERS.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setDeposit(d)}
+                    className={deposit === d ? 'btn' : 'btn-outline'}
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+                  >
+                    ${d}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* URL Configuration */}
+        <div className="border-t border-gold/30 pt-6">
+          <h4 className="text-lg font-semibold text-gold mb-4">Booking Page URL</h4>
           <div>
             <label className="mb-2 block text-sm font-medium text-secondary">Custom URL</label>
             <input
