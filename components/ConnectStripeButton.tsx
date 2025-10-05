@@ -1,7 +1,8 @@
 // components/ConnectStripeButton.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function ConnectStripeButton({ 
   businessId, 
@@ -13,6 +14,32 @@ export default function ConnectStripeButton({
   stripeAccountStatus?: string;
 }) {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check status when returning from Stripe onboarding
+  useEffect(() => {
+    const checkComplete = searchParams?.get('connect_complete');
+    if (checkComplete === 'true' && stripeAccountId && stripeAccountStatus === 'pending') {
+      checkAccountStatus();
+    }
+  }, [searchParams]);
+
+  const checkAccountStatus = async () => {
+    try {
+      const res = await fetch('/api/connect/check-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId }),
+      });
+
+      if (res.ok) {
+        router.refresh();
+      }
+    } catch (err) {
+      console.error('Status check error:', err);
+    }
+  };
 
   const handleConnect = async () => {
     setLoading(true);
@@ -59,9 +86,14 @@ export default function ConnectStripeButton({
     return (
       <div className="rounded-lg bg-yellow-950/30 border-2 border-yellow-600 p-3">
         <p className="text-sm text-yellow-400 mb-2">⚠️ Stripe setup incomplete</p>
-        <button onClick={handleConnect} disabled={loading} className="btn-outline btn-small">
-          {loading ? 'Loading...' : 'Complete Setup'}
-        </button>
+        <div className="flex gap-2">
+          <button onClick={handleConnect} disabled={loading} className="btn-outline btn-small">
+            {loading ? 'Loading...' : 'Complete Setup'}
+          </button>
+          <button onClick={checkAccountStatus} className="btn-small text-xs">
+            Refresh Status
+          </button>
+        </div>
       </div>
     );
   }
