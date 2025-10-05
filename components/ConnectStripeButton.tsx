@@ -17,7 +17,12 @@ export default function ConnectStripeButton({
   const handleConnect = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/connect/create-account', {
+      // Use refresh-link endpoint if account exists, otherwise create new
+      const endpoint = stripeAccountId 
+        ? '/api/connect/refresh-link'
+        : '/api/connect/create-account';
+      
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ businessId }),
