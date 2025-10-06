@@ -86,6 +86,33 @@ export default async function Dashboard() {
           </div>
         </header>
 
+        {/* Stripe Connect Info Banner */}
+        <div className="mb-8 card animate-fadeIn border-2 border-gold/30">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <svg className="h-12 w-12 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gold mb-2">Connect Your Stripe Account</h3>
+              <p className="text-secondary text-sm mb-3">
+                To accept payments from customers, you'll need to connect a Stripe account to each booking page you create.
+                Don't have a Stripe account? No problem - you can create one for free during the setup process.
+                Stripe handles all payment processing securely, and deposits go directly to your account.
+              </p>
+              <a
+                href="https://stripe.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gold text-sm hover:text-gold-light underline"
+              >
+                Learn more about Stripe →
+              </a>
+            </div>
+          </div>
+        </div>
+
         {!hasActiveAccess && (
           <div className="mb-8 card-gold animate-fadeIn">
             <div className="text-center">
